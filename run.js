@@ -153,7 +153,7 @@ async function main() {
             fs.mkdirSync(OUTPUT_DIR);
         }
 
-        const filename = `${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15)}.json`;
+        const filename = `${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15)}json`;
         const filePath = path.join(OUTPUT_DIR, filename);
 
         fs.writeFile(filePath, JSON.stringify(posts, null, 2), (err) => {
