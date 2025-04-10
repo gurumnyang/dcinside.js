@@ -9,22 +9,27 @@ const path = require('path');
 
 const { getPostContent } = require('./src/scraper');
 
+const OUTPUT_DIR = './output';
+
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
 
-const galleryId = 'chatgpt'; // 갤러리 ID
-
 function askQuestion(query) {
     return new Promise(resolve => {
         rl.question(query, answer => {
-            resolve(answer);
+            resolve(answer.trim());
         });
     });
 }
 
-async function scrapePostsWithProgress(startNo, endNo) {
+function validateNumberInput(input, defaultValue) {
+    const number = parseInt(input, 10);
+    return isNaN(number) ? defaultValue : number;
+}
+
+async function scrapePostsWithProgress(startNo, endNo, galleryId) {
     const totalPosts = endNo - startNo + 1;
     const progressBar = new cliProgress.SingleBar({
         format: '게시글 번호 크롤링 진행 |{bar}| {percentage}% || {value}/{total} 게시글',
@@ -34,8 +39,12 @@ async function scrapePostsWithProgress(startNo, endNo) {
 
     const posts = [];
     for (let no = startNo; no <= endNo; no++) {
-        const post = await getPostContent(no);
-        posts.push(post);
+        try {
+            const post = await getPostContent(galleryId, no);
+            posts.push(post);
+        } catch (error) {
+            console.error(`게시글 ${no} 크롤링 중 에러 발생: ${error.message}`);
+        }
         progressBar.increment();
         await new Promise(resolve => setTimeout(resolve, 50));
     }
@@ -43,8 +52,7 @@ async function scrapePostsWithProgress(startNo, endNo) {
     return posts;
 }
 
-async function scrapeBoardPagesWithProgress(startPage, endPage) {
-    // 1단계: 게시판 목록 페이지에서 게시글 번호 수집
+async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId) {
     let postNumbers = [];
     const totalPages = endPage - startPage + 1;
     const pageBar = new cliProgress.SingleBar({
@@ -76,10 +84,8 @@ async function scrapeBoardPagesWithProgress(startPage, endPage) {
     }
     pageBar.stop();
 
-    // 중복 제거
     postNumbers = [...new Set(postNumbers)];
 
-    // 2단계: 수집된 게시글 번호에 대해 개별 게시글 크롤링
     const totalPosts = postNumbers.length;
     const postBar = new cliProgress.SingleBar({
         format: '게시글 크롤링 진행 |{bar}| {percentage}% || {value}/{total} 게시글',
@@ -89,8 +95,12 @@ async function scrapeBoardPagesWithProgress(startPage, endPage) {
 
     const posts = [];
     for (const no of postNumbers) {
-        const post = await getPostContent(no);
-        posts.push(post);
+        try {
+            const post = await getPostContent(galleryId, no);
+            posts.push(post);
+        } catch (error) {
+            console.error(`게시글 ${no} 크롤링 중 에러 발생: ${error.message}`);
+        }
         postBar.increment();
         await new Promise(resolve => setTimeout(resolve, 50));
     }
@@ -99,50 +109,65 @@ async function scrapeBoardPagesWithProgress(startPage, endPage) {
 }
 
 async function main() {
-    console.log('DCInside 갤러리 크롤링 프로그램');
-    console.log('옵션을 선택하세요:');
-    console.log('1: 게시글 번호 범위로 크롤링');
-    console.log('2: 게시판 페이지 범위로 크롤링');
+    try {
+        console.log('DCInside 갤러리 크롤링 프로그램');
+        console.log('크롤링할 갤러리 ID를 입력하세요:');
 
-    const option = await askQuestion('옵션 선택 (1 또는 2): ');
-    let posts = [];
-    if (option === '1') {
-        const startNo = parseInt(await askQuestion('시작 게시글 번호: '), 10);
-        const endNo = parseInt(await askQuestion('끝 게시글 번호: '), 10);
-        posts = await scrapePostsWithProgress(startNo, endNo);
-    } else if (option === '2') {
-        const startPage = parseInt(await askQuestion('시작 페이지 번호: '), 10);
-        const endPage = parseInt(await askQuestion('끝 페이지 번호: '), 10);
-        posts = await scrapeBoardPagesWithProgress(startPage, endPage);
-    } else {
-        console.log('올바르지 않은 옵션입니다.');
-        rl.close();
-        return;
-    }
-
-    console.log('크롤링 완료!');
-    if(posts.length > 3) {
-        console.log(`게시글 개수: ${posts.length}`);
-        console.log('게시글 일부 미리보기:');
-        console.log(JSON.stringify(posts.slice(0, 3), null, 2));
-    } else {
-        console.log(JSON.stringify(posts, null, 2));
-    }
-
-    const filename = new Date().toISOString().replace(/[-:T]/g, '').slice(2, 8) + '-' + new Date().toTimeString().slice(0, 8).replace(/:/g, '') + '.json';
-
-    if(!fs.existsSync('./output')) {
-        fs.mkdirSync('./output');
-    }
-    
-    fs.writeFile(path.join("./output/", filename), JSON.stringify(posts, null, 2), (err) => {
-        if (err) {
-            console.error('JSON 파일 저장 실패:', err);
-        } else {
-            console.log(`크롤링 결과가 ${filename} 파일에 저장되었습니다.`);
+        let galleryId = await askQuestion('갤러리 ID(기본:chatgpt): ');
+        if (!galleryId) {
+            galleryId = 'chatgpt';
         }
+
+        console.log("==========================");
+        console.log('옵션을 선택하세요(기본:1):');
+        console.log('1: 게시글 번호 범위로 크롤링');
+        console.log('2: 게시판 페이지 범위로 크롤링');
+
+        const option = await askQuestion('옵션 선택 (1 또는 2): ');
+        console.log("==========================");
+
+        let posts = [];
+        if (option === '1') {
+            const startNo = validateNumberInput(await askQuestion('시작 게시글 번호: '), 1);
+            const endNo = validateNumberInput(await askQuestion('끝 게시글 번호: '), startNo);
+            posts = await scrapePostsWithProgress(startNo, endNo, galleryId);
+        } else if (option === '2') {
+            const startPage = validateNumberInput(await askQuestion('시작 페이지 번호: '), 1);
+            const endPage = validateNumberInput(await askQuestion('끝 페이지 번호: '), startPage);
+            posts = await scrapeBoardPagesWithProgress(startPage, endPage, galleryId);
+        } else {
+            console.log('올바르지 않은 옵션입니다.');
+            return;
+        }
+
+        console.log('크롤링 완료!');
+        if (posts.length > 3) {
+            console.log(`게시글 개수: ${posts.length}`);
+            console.log('게시글 일부 미리보기:');
+            console.log(JSON.stringify(posts.slice(0, 3), null, 2));
+        } else {
+            console.log(JSON.stringify(posts, null, 2));
+        }
+
+        if (!fs.existsSync(OUTPUT_DIR)) {
+            fs.mkdirSync(OUTPUT_DIR);
+        }
+
+        const filename = `${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15)}.json`;
+        const filePath = path.join(OUTPUT_DIR, filename);
+
+        fs.writeFile(filePath, JSON.stringify(posts, null, 2), (err) => {
+            if (err) {
+                console.error('JSON 파일 저장 실패:', err);
+            } else {
+                console.log(`크롤링 결과가 ${filePath} 파일에 저장되었습니다.`);
+            }
+        });
+    } catch (error) {
+        console.error('프로그램 실행 중 에러 발생:', error.message);
+    } finally {
         rl.close();
-    });
+    }
 }
 
 main();
