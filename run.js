@@ -131,6 +131,10 @@ async function main() {
 
     const filename = new Date().toISOString().replace(/[-:T]/g, '').slice(2, 8) + '-' + new Date().toTimeString().slice(0, 8).replace(/:/g, '') + '.json';
 
+    if(!fs.existsSync('./output')) {
+        fs.mkdirSync('./output');
+    }
+    
     fs.writeFile(path.join("./output/", filename), JSON.stringify(posts, null, 2), (err) => {
         if (err) {
             console.error('JSON 파일 저장 실패:', err);
