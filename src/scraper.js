@@ -32,6 +32,11 @@ async function getPostContent(galleryId, no) {
 
         const contentElement = $('.gallview_contents .write_div');
         replaceImagesWithPlaceholder(contentElement);
+        contentElement.find('br').replaceWith('\n');
+        contentElement.find('p, div, li').each((_, element) => {
+            const $element = $(element);
+            $element.after('\n');
+        });
         const content = contentElement.text().trim();
 
         const viewCount = extractText($, 'header .gall_count').replace("조회", "") || 'null';
