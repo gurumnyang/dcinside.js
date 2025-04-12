@@ -7,7 +7,7 @@ const cheerio = require('cheerio');
 const cliProgress = require('cli-progress');
 const path = require('path');
 
-const { getPostContent } = require('./src/scraper');
+const { getPostContent, scrapeBoardPages } = require('./src/scraper');
 
 const OUTPUT_DIR = './output';
 
@@ -53,36 +53,14 @@ async function scrapePostsWithProgress(startNo, endNo, galleryId) {
 }
 
 async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId) {
-    let postNumbers = [];
-    const totalPages = endPage - startPage + 1;
-    const pageBar = new cliProgress.SingleBar({
-        format: '게시판 페이지 번호 수집 |{bar}| {percentage}% || {value}/{total} 페이지',
-        hideCursor: true
-    }, cliProgress.Presets.shades_classic);
-    pageBar.start(totalPages, 0);
+    
 
-    for (let page = startPage; page <= endPage; page++) {
-        const url = `https://gall.dcinside.com/mgallery/board/lists/?id=${galleryId}&list_num=100&search_head=&page=${page}`;
-        try {
-            const { data } = await axios.get(url, {
-                headers: { 'User-Agent': 'Mozilla/5.0' }
-            });
-            const $ = cheerio.load(data);
-            $('.ub-content .gall_tit a').each((index, element) => {
-                const link = $(element).attr('href');
-                if (link) {
-                    const match = link.match(/no=(\d+)/);
-                    if (match) {
-                        postNumbers.push(match[1]);
-                    }
-                }
-            });
-        } catch (error) {
-            console.error(`게시판 페이지 ${page} 크롤링 중 에러 발생: ${error.message}`);
-        }
-        pageBar.increment();
+    let postNumbers = [];
+    try {
+        postNumbers = await scrapeBoardPages(startPage, endPage, galleryId);
+    } catch (error) {
+        console.error(`게시판 페이지 크롤링 중 에러 발생: ${error.message}`);
     }
-    pageBar.stop();
 
     postNumbers = [...new Set(postNumbers)];
 
@@ -93,8 +71,11 @@ async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId) {
     }, cliProgress.Presets.shades_classic);
     postBar.start(totalPosts, 0);
 
+    const delay = 100; // 요청 간 딜레이
+
     const posts = [];
     for (const no of postNumbers) {
+        const time = new Date();
         try {
             const post = await getPostContent(galleryId, no);
             posts.push(post);
@@ -102,7 +83,11 @@ async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId) {
             console.error(`게시글 ${no} 크롤링 중 에러 발생: ${error.message}`);
         }
         postBar.increment();
-        await new Promise(resolve => setTimeout(resolve, 50));
+
+        const elapsedTime = new Date() - time;
+        if (elapsedTime < delay) {
+            await new Promise(resolve => setTimeout(resolve, delay - elapsedTime));
+        }
     }
     postBar.stop();
     return posts;

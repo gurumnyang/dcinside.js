@@ -2,6 +2,7 @@
 
 const axios = require('axios');
 const cheerio = require('cheerio');
+const cliProgress = require('cli-progress');
 
 // 상수 정의
 const BASE_URL = 'https://gall.dcinside.com';
@@ -18,6 +19,43 @@ const extractText = ($, selector, defaultValue = '') => {
 const replaceImagesWithPlaceholder = (element, placeholder = '[이미지]\n') => {
     element.find('img').replaceWith(placeholder);
 };
+
+
+// 게시판 페이지 크롤링
+async function scrapeBoardPages(startPage, endPage, galleryId) {
+    const totalPages = endPage - startPage + 1;
+    const pageBar = new cliProgress.SingleBar({
+        format: '게시판 페이지 번호 수집 |{bar}| {percentage}% || {value}/{total} 페이지',
+        hideCursor: true
+    }, cliProgress.Presets.shades_classic);
+    pageBar.start(totalPages, 0);
+
+    let postNumbers = [];
+    for (let page = startPage; page <= endPage; page++) {
+        const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}&list_num=100&search_head=&page=${page}`;
+        try {
+            const { data } = await axios.get(url, { headers: HEADERS });
+            const $ = cheerio.load(data);
+
+            $('.ub-content .gall_tit a').each((_, element) => {
+                const link = $(element).attr('href');
+                if (link) {
+                    const match = link.match(/no=(\d+)/);
+                    if (match) {
+                        postNumbers.push(match[1]);
+                    }
+                }
+            });
+        } catch (error) {
+            console.error(`게시판 페이지 ${page} 크롤링 중 에러 발생: ${error.message}`);
+        }
+        pageBar.increment()
+        await delay(100); // 요청 간 딜레이
+    }
+    pageBar.stop();
+
+    return [...new Set(postNumbers)]; // 중복 제거 후 반환
+}
 
 // 게시글 내용 크롤링
 async function getPostContent(galleryId, no) {
@@ -117,40 +155,8 @@ async function scrapePostsRange(startNo, endNo, galleryId) {
     return posts;
 }
 
-// 게시판 페이지 범위 크롤링
-async function scrapeBoardPages(galleryId, startPage, endPage) {
-    const postNumbers = [];
-    for (let page = startPage; page <= endPage; page++) {
-        const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}&list_num=100&page=${page}`;
-        try {
-            console.log(`게시판 페이지 ${page} 크롤링 중...`);
-            const { data } = await axios.get(url, { headers: HEADERS });
-            const $ = cheerio.load(data);
-
-            $('.ub-content .gall_tit a').each((_, element) => {
-                const link = $(element).attr('href');
-                const match = link?.match(/no=(\d+)/);
-                if (match) postNumbers.push(match[1]);
-            });
-        } catch (error) {
-            console.error(`게시판 페이지 ${page} 크롤링 중 에러 발생: ${error.message} (URL: ${url})`);
-        }
-        await delay(100);
-    }
-
-    const uniquePostNumbers = [...new Set(postNumbers)];
-    const posts = [];
-    for (const no of uniquePostNumbers) {
-        console.log(`게시글 ${no} 크롤링 중...`);
-        const post = await getPostContent(galleryId, no);
-        if (post) posts.push(post);
-        await delay(100);
-    }
-    return posts;
-}
 
 module.exports = {
-    getPostContent,
-    scrapePostsRange,
-    scrapeBoardPages
+    scrapeBoardPages,
+    getPostContent
 };
