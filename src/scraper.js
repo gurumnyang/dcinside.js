@@ -22,7 +22,7 @@ const replaceImagesWithPlaceholder = (element, placeholder = '[이미지]\n') =>
 
 
 // 게시판 페이지 크롤링
-async function scrapeBoardPages(startPage, endPage, galleryId) {
+async function scrapeBoardPages(startPage, endPage, galleryId, typeParam='all') {
     const totalPages = endPage - startPage + 1;
     const pageBar = new cliProgress.SingleBar({
         format: '게시판 페이지 번호 수집 |{bar}| {percentage}% || {value}/{total} 페이지',
@@ -32,7 +32,7 @@ async function scrapeBoardPages(startPage, endPage, galleryId) {
 
     let postNumbers = [];
     for (let page = startPage; page <= endPage; page++) {
-        const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}&list_num=100&search_head=&page=${page}`;
+        const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}&list_num=100&search_head=&page=${page}&exception_mode=${typeParam}`;
         try {
             const { data } = await axios.get(url, { headers: HEADERS });
             const $ = cheerio.load(data);
@@ -57,9 +57,14 @@ async function scrapeBoardPages(startPage, endPage, galleryId) {
     return [...new Set(postNumbers)]; // 중복 제거 후 반환
 }
 
-// 게시글 내용 크롤링
-async function getPostContent(galleryId, no) {
-    const url = `${BASE_URL}/mgallery/board/view/?id=${galleryId}&no=${no}`;
+/**
+ *
+ * @param galleryId
+ * @param no
+ * @param type - 'all', 'recommend', 'notice'
+ */
+async function getPostContent(galleryId="chatgpt", no, type="all") {
+    const url = `${BASE_URL}/mgallery/board/view/?id=${galleryId}&no=${no}&exception_mode=${type}`;
     try {
         const { data } = await axios.get(url, { headers: HEADERS });
         const $ = cheerio.load(data);

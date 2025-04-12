@@ -1,6 +1,4 @@
 // run.js
-
-const readline = require('readline');
 const fs = require('fs');
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -8,26 +6,10 @@ const cliProgress = require('cli-progress');
 const path = require('path');
 
 const { getPostContent, scrapeBoardPages } = require('./src/scraper');
+const {askQuestion,validateNumberInput } = require('./src/util');
 
 const OUTPUT_DIR = './output';
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-
-function askQuestion(query) {
-    return new Promise(resolve => {
-        rl.question(query, answer => {
-            resolve(answer.trim());
-        });
-    });
-}
-
-function validateNumberInput(input, defaultValue) {
-    const number = parseInt(input, 10);
-    return isNaN(number) ? defaultValue : number;
-}
 
 async function scrapePostsWithProgress(startNo, endNo, galleryId) {
     const totalPosts = endNo - startNo + 1;
@@ -52,12 +34,12 @@ async function scrapePostsWithProgress(startNo, endNo, galleryId) {
     return posts;
 }
 
-async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId) {
+async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId, typeParam='all') {
     
 
     let postNumbers = [];
     try {
-        postNumbers = await scrapeBoardPages(startPage, endPage, galleryId);
+        postNumbers = await scrapeBoardPages(startPage, endPage, galleryId, typeParam);
     } catch (error) {
         console.error(`게시판 페이지 크롤링 중 에러 발생: ${error.message}`);
     }
@@ -96,8 +78,8 @@ async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId) {
 async function main() {
     try {
         console.log('DCInside 갤러리 크롤링 프로그램');
-        console.log('크롤링할 갤러리 ID를 입력하세요:');
 
+        console.log('크롤링할 갤러리 ID를 입력하세요:');
         let galleryId = await askQuestion('갤러리 ID(기본:chatgpt): ');
         if (!galleryId) {
             galleryId = 'chatgpt';
@@ -109,7 +91,35 @@ async function main() {
         console.log('2: 게시판 페이지 범위로 크롤링');
 
         const option = await askQuestion('옵션 선택 (1 또는 2): ');
-        console.log("==========================");
+
+        if (option !== '1' && option !== '2') {
+            console.log('올바르지 않은 옵션입니다.');
+            return;
+        }
+
+        let typeParam = 'all';
+        if(option === '2') {
+            console.log("==========================");
+            console.log('게시판을 선택하세요(기본:1):');
+            console.log('1: 전체글');
+            console.log('2: 개념글');
+            console.log('3: 공지');
+
+            const type = await askQuestion('게시판 선택 (1~3): ');
+            typeParam = 'all';
+            if (type === '1') {
+                typeParam = 'all';
+            }
+            else if (type === '2') {
+                typeParam = 'recommend';
+            } else if (type === '3') {
+                typeParam = 'notice';
+            } else {
+                console.log('올바르지 않은 게시판입니다.');
+                return;
+            }
+        }
+
 
         let posts = [];
         if (option === '1') {
@@ -119,7 +129,7 @@ async function main() {
         } else if (option === '2') {
             const startPage = validateNumberInput(await askQuestion('시작 페이지 번호: '), 1);
             const endPage = validateNumberInput(await askQuestion('끝 페이지 번호: '), startPage);
-            posts = await scrapeBoardPagesWithProgress(startPage, endPage, galleryId);
+            posts = await scrapeBoardPagesWithProgress(startPage, endPage, galleryId, typeParam);
         } else {
             console.log('올바르지 않은 옵션입니다.');
             return;
@@ -150,8 +160,6 @@ async function main() {
         });
     } catch (error) {
         console.error('프로그램 실행 중 에러 발생:', error.message);
-    } finally {
-        rl.close();
     }
 }
 
