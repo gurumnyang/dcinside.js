@@ -173,18 +173,6 @@ async function getCommentsForPost(no, galleryId, e_s_n_o) {
     }
 }
 
-// 게시글 번호 범위 크롤링
-async function scrapePostsRange(startNo, endNo, galleryId) {
-    const posts = [];
-    for (let no = startNo; no <= endNo; no++) {
-        console.log(`게시글 ${no} 크롤링 중...`);
-        const post = await getPostContent(galleryId, no);
-        if (post) posts.push(post);
-        await delay(50); // 요청 간 딜레이
-    }
-    return posts;
-}
-
 
 module.exports = {
     scrapeBoardPages,
