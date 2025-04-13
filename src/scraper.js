@@ -22,7 +22,21 @@ const replaceImagesWithPlaceholder = (element, placeholder = '[이미지]\n') =>
 
 
 // 게시판 페이지 크롤링
-async function scrapeBoardPages(startPage, endPage, galleryId, typeParam='all') {
+/**
+ *
+ * @param startPage
+ * @param endPage
+ * @param galleryId
+ * @param options
+ * @return {Promise<*[]>}
+ */
+async function scrapeBoardPages(startPage, endPage, galleryId, options = {
+    exception_mode: 'all',
+    num: null,
+    subject: null,
+    nickname: null,
+    ip: null
+}) {
     const totalPages = endPage - startPage + 1;
     const pageBar = new cliProgress.SingleBar({
         format: '게시판 페이지 번호 수집 |{bar}| {percentage}% || {value}/{total} 페이지',
@@ -32,13 +46,24 @@ async function scrapeBoardPages(startPage, endPage, galleryId, typeParam='all') 
 
     let postNumbers = [];
     for (let page = startPage; page <= endPage; page++) {
-        const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}&list_num=100&search_head=&page=${page}&exception_mode=${typeParam}`;
+        const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}&list_num=100&search_head=&page=${page}&exception_mode=${options.exception_mode}`;
         try {
             const { data } = await axios.get(url, { headers: HEADERS });
             const $ = cheerio.load(data);
 
-            $('.ub-content .gall_tit a').each((_, element) => {
-                const link = $(element).attr('href');
+            $('.ub-content').each((_, element) => {
+
+                const num = $(element).find(".gall_num").text();
+                const subject = $(element).find(".gall_subject").text();
+                const link = $(element).find('.gall_tit a').attr('href');
+                const nickname = $(element).find(".gall_writer").attr("data-nick")
+                const ip = $(element).find(".gall_writer").attr("data-ip")
+
+                if(options.num && options.num !== num) return;
+                if(options.subject && options.subject !== subject) return;
+                if(options.nickname && options.nickname !== nickname) return;
+                if(options.ip && options.ip !== ip) return;
+
                 if (link) {
                     const match = link.match(/no=(\d+)/);
                     if (match) {
