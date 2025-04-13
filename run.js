@@ -12,7 +12,22 @@ const OUTPUT_DIR = './output';
 
 
 async function scrapePostsWithProgress(startNo, endNo, galleryId) {
-    const totalPosts = endNo - startNo + 1;
+    if (startNo > endNo) {
+        [startNo, endNo] = [endNo, startNo];
+    }
+    const numbers = Array.from({ length: endNo - startNo + 1 }, (_, i) => startNo + i);
+    return await scrapePostsWithArray(numbers, galleryId);
+}
+
+//번호 배열로 입력받고 게시글 크롤링
+/**
+ *
+ * @param numbers {Array} 게시글 번호 배열
+ * @param galleryId
+ * @returns {Promise<Array>} 크롤링된 게시글 배열
+ */
+async function scrapePostsWithArray(numbers, galleryId) {
+    const totalPosts = numbers.length;
     const progressBar = new cliProgress.SingleBar({
         format: '게시글 번호 크롤링 진행 |{bar}| {percentage}% || {value}/{total} 게시글',
         hideCursor: true
@@ -20,7 +35,7 @@ async function scrapePostsWithProgress(startNo, endNo, galleryId) {
     progressBar.start(totalPosts, 0);
 
     const posts = [];
-    for (let no = startNo; no <= endNo; no++) {
+    for (const no of numbers) {
         try {
             const post = await getPostContent(galleryId, no);
             if(!post) {
@@ -57,7 +72,7 @@ async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId, typeP
     }, cliProgress.Presets.shades_classic);
     postBar.start(totalPosts, 0);
 
-    const delay = 100; // 요청 간 딜레이
+    const delay = 10; // 요청 간 딜레이
 
     const posts = [];
     for (const no of postNumbers) {
@@ -93,10 +108,11 @@ async function main() {
         console.log('옵션을 선택하세요(기본:1):');
         console.log('1: 게시글 번호 범위로 크롤링');
         console.log('2: 게시판 페이지 범위로 크롤링');
+        console.log('3: 게시글 번호로 크롤링');
 
-        const option = await askQuestion('옵션 선택 (1 또는 2): ');
+        const option = await askQuestion('옵션 선택 (1~3): ');
 
-        if (option !== '1' && option !== '2') {
+        if (option !== '1' && option !== '2' && option !== '3') {
             console.log('올바르지 않은 옵션입니다.');
             return;
         }
@@ -134,6 +150,14 @@ async function main() {
             const startPage = validateNumberInput(await askQuestion('시작 페이지 번호: '), 1);
             const endPage = validateNumberInput(await askQuestion('끝 페이지 번호: '), startPage);
             posts = await scrapeBoardPagesWithProgress(startPage, endPage, galleryId, typeParam);
+        } else if (option === '3') {
+            const numbers = await askQuestion('게시글 번호를 쉼표로 구분하여 입력하세요: ');
+            const noArray = numbers.split(',').map(num => num.trim()).filter(num => num);
+            if (noArray.length === 0) {
+                console.log('게시글 번호가 입력되지 않았습니다.');
+                return;
+            }
+            posts = await scrapePostsWithProgress(startNo, endNo, galleryId);
         } else {
             console.log('올바르지 않은 옵션입니다.');
             return;
