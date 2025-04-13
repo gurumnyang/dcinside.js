@@ -58,6 +58,17 @@ const main = async () => {
         if (item.content) {
             item.content = item.content.replace(/\n/g, '\\n');
         }
+        if (item.comments) {
+            item.comments = item.comments.comments.map(comment => {
+                if (comment.memo) {
+                    comment.memo = comment.memo.replace(/\n/g, '\\n');
+                }
+                comment = `${comment.userId}/${comment.name}/${comment.ip}/${comment.memo}`;
+                return comment;
+            });
+            item.comments = item.comments.join('|');
+        }
+
         return item;
     });
 
