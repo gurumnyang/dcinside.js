@@ -23,6 +23,10 @@ async function scrapePostsWithProgress(startNo, endNo, galleryId) {
     for (let no = startNo; no <= endNo; no++) {
         try {
             const post = await getPostContent(galleryId, no);
+            if(!post) {
+                console.error(`게시글 ${no} 크롤링 실패`);
+                continue;
+            }
             posts.push(post);
         } catch (error) {
             console.error(`게시글 ${no} 크롤링 중 에러 발생: ${error.message}`);
