@@ -86,10 +86,9 @@ async function scrapeBoardPages(startPage, endPage, galleryId, options = {
  *
  * @param galleryId
  * @param no
- * @param type - 'all', 'recommend', 'notice'
  */
-async function getPostContent(galleryId="chatgpt", no, type="all") {
-    const url = `${BASE_URL}/mgallery/board/view/?id=${galleryId}&no=${no}&exception_mode=${type}`;
+async function getPostContent(galleryId="chatgpt", no) {
+    const url = `${BASE_URL}/mgallery/board/view/?id=${galleryId}&no=${no}`;
     try {
         const { data } = await axios.get(url, { headers: HEADERS });
         const $ = cheerio.load(data);
