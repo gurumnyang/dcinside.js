@@ -19,7 +19,12 @@ function validateNumberInput(input, defaultValue) {
     return isNaN(number) ? defaultValue : number;
 }
 
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 module.exports = {
     askQuestion,
-    validateNumberInput
+    validateNumberInput,
+    delay
 }

@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const cliProgress = require('cli-progress');
 const { getPostContent, scrapeBoardPages } = require('./src/scraper');
-const { askQuestion, validateNumberInput } = require('./src/util');
+const { askQuestion, validateNumberInput, delay } = require('./src/util');
 
 const OUTPUT_DIR = './output';
 
@@ -102,15 +102,6 @@ async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId, typeP
     }
     progressBar.stop();
     return posts;
-}
-
-/**
- * 지정한 시간(ms)만큼 지연합니다.
- * @param {number} ms 지연 시간 (밀리초)
- * @returns {Promise<void>}
- */
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**

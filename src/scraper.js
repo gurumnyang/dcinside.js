@@ -3,6 +3,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const cliProgress = require('cli-progress');
+const { delay } = require('./util');
 
 // 상수 정의
 const BASE_URL = 'https://gall.dcinside.com';
@@ -10,8 +11,6 @@ const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
 const HEADERS = { 'User-Agent': USER_AGENT };
 
 // 유틸리티 함수
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
 const extractText = ($, selector, defaultValue = '') => {
     return $(selector).text().trim() || defaultValue;
 };
