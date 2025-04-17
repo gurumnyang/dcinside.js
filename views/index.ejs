@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>DCInside 크롤러</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    >
+
+    <style>
+        /* 블럭 카드의 기본 스타일 */
+        .block-card {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+        .block-card header {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        /* 로그 창 */
+        #consoleLogs {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            white-space: pre-wrap; /* 로그가 여러 줄로 자동 줄바꿈 되도록 */
+        }
+        /* 세부 입력 폼 항목 숨김/표시를 위한 도우미 */
+        .block-params {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container my-4">
+    <h1 class="mb-4">DCInside 크롤러</h1>
+    <div class="row">
+        <!-- 사이드바 영역 (원하는 메뉴나 안내글) -->
+        <aside class="col-2">
+            <h5>사이드바</h5>
+            <nav>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">메뉴1</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">메뉴2</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">메뉴3</a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 블럭 구성 영역 -->
+        <section class="col-10">
+            <div class="d-flex mb-3">
+                <button id="addBlockBtn" class="btn btn-primary me-2">블럭 추가</button>
+                <button id="runSequenceBtn" class="btn btn-success">Run Sequence</button>
+            </div>
+
+            <!-- 블럭들이 순차적으로 쌓이는 곳 -->
+            <div id="blocksContainer" class="mb-3">
+                <!-- JavaScript로 동적으로 블럭 카드가 생성됨 -->
+            </div>
+
+            <!-- 로그/결과 영역 -->
+            <div>
+                <h5>콘솔 로그</h5>
+                <div id="consoleLogs">(아직 로그가 없습니다)</div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Bootstrap Bundle JS -->
+<script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+></script>
+<script>
+    /* 쿠키 설정/읽기 도우미 함수 */
+    function setCookie(name, value, days) {
+        console.log(`쿠키 설정: ${name}=${value}, 만료일: ${days}일`);
+        const expires = new Date(Date.now() + days * 864e5).toUTCString();
+        document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+    }
+
+    function getCookie(name) {
+        console.log(`쿠키 읽기: ${name}`);
+        return document.cookie.split('; ').reduce((r, v) => {
+            const parts = v.split('=');
+            return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+        }, '');
+    }
+
+    /* 블럭 데이터 쿠키 저장/로딩 */
+    const COOKIE_NAME = 'blockData';
+    function saveBlocksToCookie() {
+        if(!blocks || blocks.length === 0) return;
+        try {
+            setCookie(COOKIE_NAME, JSON.stringify(blocks), 30);
+        } catch(e) {
+            console.error("블럭 저장 오류:", e);
+        }
+    }
+
+    function loadBlocksFromCookie() {
+        const cookieValue = getCookie(COOKIE_NAME);
+        if (cookieValue) {
+            try {
+                const loaded = JSON.parse(cookieValue);
+                if (Array.isArray(loaded)) {
+                    blocks = loaded;
+                    // blockIdCounter를 현재 max id보다 큰 값으로 설정
+                    const maxId = blocks.reduce((max, block) => Math.max(max, block.id), 0);
+                    blockIdCounter = maxId + 1;
+                }
+            } catch(e) {
+                console.error("블럭 복원 오류:", e);
+            }
+        }
+    }
+
+    // 블럭 데이터를 저장할 배열 (각 블럭: { id, type, params, result })
+    let blocks = [];
+    let blockIdCounter = 1;
+
+    // 블럭 타입 목록
+    const BLOCK_TYPES = [
+        { value: 'valueBlock', label: 'Value Block(값 입력)' },
+        { value: 'fetchBoardInfo', label: '게시판 정보 Fetch' },
+        { value: 'crawlPosts', label: '게시글 크롤링' },
+        { value: 'filterPosts', label: '필터링' },
+        { value: 'etcProcess', label: '기타 처리' },
+        { value: 'exportJson', label: 'JSON으로 내보내기' }
+    ];
+
+    // 새 블럭 생성
+    function createBlock() {
+        const newBlock = {
+            id: blockIdCounter++,
+            type: 'valueBlock', // 기본 타입
+            params: {},
+            result: null
+        };
+        blocks.push(newBlock);
+        renderBlocks();
+    }
+
+    // 블럭 삭제
+    function deleteBlock(blockId) {
+        blocks = blocks.filter(b => b.id !== blockId);
+        renderBlocks();
+    }
+
+    //블럭 위치 변경
+    function moveBlock(blockId, direction) {
+        const index = blocks.findIndex(b => b.id === blockId);
+        if (index > -1) {
+            const targetIndex = direction === 'up' ? index - 1 : index + 1;
+            if (targetIndex >= 0 && targetIndex < blocks.length) {
+                const temp = blocks[index];
+                blocks[index] = blocks[targetIndex];
+                blocks[targetIndex] = temp;
+                renderBlocks();
+            }
+        }
+    }
+
+    // 블럭 타입에 따른 파라미터 입력 UI 생성
+    function renderBlockParams(block) {
+        switch (block.type) {
+            case 'valueBlock':
+                return `
+          <div class="mb-2">
+            <label class="form-label">Value</label>
+            <input type="text" class="form-control param-input" data-block-id="${block.id}" data-param-name="value" value="${block.params.value || ''}">
+          </div>
+        `;
+            case 'fetchBoardInfo':
+                return `
+          <div class="mb-2 col-5">
+            <label class="form-label">Gallery ID</label>
+            <input type="text" class="form-control param-input" data-block-id="${block.id}" data-param-name="galleryId" placeholder="ex) chatgpt" value="${block.params.galleryId || ''}">
+          </div>
+          <div class="mb-2 col-3">
+            <label class="form-label">게시판 유형</label>
+            <select class="form-select param-input" data-block-id="${block.id}" data-param-name="boardType">
+              <option value="all" ${block.params.boardType==='all'?'selected':''}>전체글</option>
+              <option value="recommend" ${block.params.boardType==='recommend'?'selected':''}>개념글</option>
+              <option value="notice" ${block.params.boardType==='notice'?'selected':''}>공지</option>
+            </select>
+          </div>
+          <div class="mb-2 col-2">
+            <label class="form-label">시작 페이지</label>
+            <input type="number" class="form-control param-input" data-block-id="${block.id}" data-param-name="startPage" value="${block.params.startPage || ''}">
+          </div>
+          <div class="mb-2 col-2">
+            <label class="form-label">끝 페이지</label>
+            <input type="number" class="form-control param-input" data-block-id="${block.id}" data-param-name="endPage" value="${block.params.endPage || ''}">
+          </div>
+        `;
+            case 'crawlPosts':
+                return `
+          <div class="mb-2">
+            <label class="form-label">crawlInput<br><small class="text-muted">게시글 번호 (쉼표 구분, ex: 123,456,789 또는 {result}로 결괏값 상속)</small></label>
+            <input type="text" class="form-control param-input" data-block-id="${block.id}" data-param-name="crawlInput" placeholder="ex: 123,456,789" value="${block.params.crawlInput || ''}">
+          </div>
+        `;
+            case 'filterPosts':
+                return `
+          <div class="mb-2">
+            <label class="form-label">filterCondition<br><small class="text-muted">예: subject=특정제목</small></label>
+            <input type="text" class="form-control param-input" data-block-id="${block.id}" data-param-name="filterCondition" placeholder="ex: subject=특정제목" value="${block.params.filterCondition || ''}">
+          </div>
+        `;
+            case 'etcProcess':
+                return `
+          <div class="mb-2">
+            <label class="form-label">etcInput<br><small class="text-muted">임의 처리 입력 (ex: 정렬, 분석)</small></label>
+            <input type="text" class="form-control param-input" data-block-id="${block.id}" data-param-name="etcInput" placeholder="ex: 정렬, 분석" value="${block.params.etcInput || ''}">
+          </div>
+        `;
+            case 'exportJson':
+                return `
+          <div class="mb-2">
+            <label class="form-label">filename<br><small class="text-muted">출력 파일명 (ex: output.json)</small></label>
+            <input type="text" class="form-control param-input" data-block-id="${block.id}" data-param-name="filename" placeholder="ex: output.json" value="${block.params.filename || ''}">
+          </div>
+        `;
+            default:
+                return '';
+        }
+    }
+
+    // blocks 배열 기반으로 블럭 카드 재렌더링
+    function renderBlocks() {
+        const container = document.getElementById('blocksContainer');
+        container.innerHTML = '';
+        blocks.forEach(block => {
+            const html = `
+        <div class="block-card" data-block-id="${block.id}">
+            <div class="mb-2 d-flex justify-content-end">
+              <b class="me-auto">Block #${block.id}</b>
+              <button class="btn btn-sm btn-secondary mt-2 move-block-btn" data-block-id="${block.id}" data-direction="up">↑</button>
+              <button class="btn btn-sm btn-secondary mt-2 move-block-btn" data-block-id="${block.id}" data-direction="down">↓</button>
+              <button class="btn btn-sm btn-danger mt-2 delete-block-btn" data-block-id="${block.id}">블럭 삭제</button>
+            </div>
+          <div class="mb-2">
+            <label class="form-label">블럭 타입</label>
+            <select class="form-select block-type-select" data-block-id="${block.id}">
+              ${BLOCK_TYPES.map(bt => {
+                const selected = (bt.value === block.type) ? 'selected' : '';
+                return `<option value="${bt.value}" ${selected}>${bt.label}</option>`;
+            }).join('')}
+            </select>
+          </div>
+          <div class="block-params row">
+            ${renderBlockParams(block)}
+          </div>
+          <div class="small text-muted">
+            <strong>Result:</strong> <code style="max-height: 2.675em; overflow-y: auto; display: block;">${block.result !== null ? JSON.stringify(block.result) : '(no result yet)'}</code>
+          </div>
+        </div>
+      `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+        // 블럭 렌더링 후 쿠키에 저장
+        saveBlocksToCookie();
+    }
+
+    // Run Sequence: 순차적으로 각 블럭의 실제 API 호출 실행
+    async function runSequence() {
+        logToConsole(`--- 시퀀스 실행 시작 (총 ${blocks.length} 블럭) ---`);
+        let lastResult = null;
+        for (let i = 0; i < blocks.length; i++) {
+            const block = blocks[i];
+            logToConsole(`[Block #${block.id}] Type: ${block.type} 실행 중...`);
+            try {
+                let response, data;
+                // 각 블럭별 실제 API 호출
+                switch(block.type) {
+                    case 'valueBlock':
+                        response = await fetch('/api/block/valueBlock', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ value: block.params.value })
+                        });
+                        data = await response.json();
+                        block.result = data.result;
+                        lastResult = data.result;
+                        break;
+                    case 'fetchBoardInfo':
+                        response = await fetch('/api/block/fetchBoardInfo', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                galleryId: block.params.galleryId,
+                                startPage: block.params.startPage,
+                                endPage: block.params.endPage,
+                                boardType: block.params.boardType
+                            })
+                        });
+                        data = await response.json();
+                        block.result = data;
+                        lastResult = data;
+                        break;
+                    case 'crawlPosts':
+                        // galleryId는 이전 fetchBoardInfo 결과에서 가져오거나 별도 입력할 수 있음.
+                        let crawlInputs = block.params.crawlInput;
+                        if (crawlInputs === '{result}') {
+                            if (!lastResult) throw new Error('이전 블럭의 결과가 없습니다.');
+                            if (Array.isArray(lastResult.fetchedPosts)) {
+                                crawlInputs = lastResult.fetchedPosts;
+                            }
+                            else if (Array.isArray(lastResult)) {
+                                crawlInputs = lastResult
+                            }
+                            else if (typeof lastResult === 'string') {
+                                try {
+                                    crawlInputs = JSON.parse(lastResult);
+                                } catch (e) {
+                                    crawlInputs = lastResult.split(',').map(id => id.trim());
+                                }
+                            }
+                        } else {
+                            crawlInputs = crawlInputs.split(',').map(id => id.trim());
+                        }
+                        block.result = [];
+                        for (let i = 0; i < crawlInputs.length; i += 15) {
+                            const batch = crawlInputs.slice(i, i + 15);
+                            response = await fetch('/api/block/crawlPosts', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    galleryId: blocks.find(b => b.type === 'fetchBoardInfo')?.result?.galleryId || 'chatgpt',
+                                    crawlInput: batch
+                                })
+                            });
+                            const data = await response.json();
+                            block.result.push(...data.posts);
+                            logToConsole(`[Batch ${Math.floor(i / 15) + 1} / ${Math.floor(crawlInputs.length / 15)}] 성공`);
+                        }
+                        block.result = block.result.filter(post => post !== null);
+                        break;
+                    case 'filterPosts':
+                        response = await fetch('/api/block/filterPosts', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                posts: lastResult, // 이전 결과를 posts로 사용
+                                filterCondition: block.params.filterCondition
+                            })
+                        });
+                        data = await response.json();
+                        block.result = data;
+                        break;
+                    case 'etcProcess':
+                        response = await fetch('/api/block/etcProcess', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                etcInput: block.params.etcInput,
+                                data: lastResult
+                            })
+                        });
+                        data = await response.json();
+                        block.result = data;
+                        break;
+                    case 'exportJson':
+                        response = await fetch('/api/block/exportJson', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                filename: block.params.filename,
+                                data: lastResult
+                            })
+                        });
+                        data = await response.json();
+                        block.result = data;
+                        break;
+                    default:
+                        block.result = `알 수 없는 블럭 타입`;
+                }
+                lastResult = block.result;
+                logToConsole(`[Block #${block.id}] 성공: result = ${JSON.stringify(block.result)}`);
+            } catch (err) {
+                logToConsole(`[Block #${block.id}] 에러: ${err.message}`);
+                break;
+            }
+        }
+        logToConsole(`--- 시퀀스 실행 종료 ---`);
+        renderBlocks();
+    }
+
+    // 로그 출력 함수
+    function logToConsole(message) {
+        const consoleEl = document.getElementById('consoleLogs');
+        consoleEl.textContent += message + "\n";
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    // 이벤트 핸들러 등록
+    document.getElementById('addBlockBtn').addEventListener('click', createBlock);
+    document.getElementById('runSequenceBtn').addEventListener('click', runSequence);
+
+    // 블럭 컨테이너 내 이벤트 (블럭 타입 변경, 입력값 반영, 삭제 처리)
+    document.getElementById('blocksContainer').addEventListener('change', function(e) {
+        const target = e.target;
+        if (target.classList.contains('block-type-select')) {
+            const blockId = parseInt(target.dataset.blockId, 10);
+            const block = blocks.find(b => b.id === blockId);
+            if (block) {
+                block.type = target.value;
+                block.params = {};
+                block.result = null;
+                renderBlocks();
+            }
+        } else if (target.classList.contains('param-input')) {
+            const blockId = parseInt(target.dataset.blockId, 10);
+            const paramName = target.dataset.paramName;
+            const block = blocks.find(b => b.id === blockId);
+            if (block) {
+                block.params[paramName] = target.value;
+                saveBlocksToCookie();
+            }
+        }
+    });
+    document.getElementById('blocksContainer').addEventListener('click', function(e) {
+        if (e.target.classList.contains('delete-block-btn')) {
+            const blockId = parseInt(e.target.dataset.blockId, 10);
+            deleteBlock(blockId);
+        }
+    });
+    // 블럭 이동 버튼 클릭 이벤트
+    document.getElementById('blocksContainer').addEventListener('click', function(e) {
+        if (e.target.classList.contains('move-block-btn')) {
+            const blockId = parseInt(e.target.dataset.blockId, 10);
+            const direction = e.target.dataset.direction;
+            moveBlock(blockId, direction);
+        }
+    });
+
+    // 페이지 로드 시, 쿠키에서 블럭 데이터를 로드
+    window.addEventListener('load', function() {
+        loadBlocksFromCookie();
+        renderBlocks();
+        // 초기 블럭 1개 생성 (쿠키에 저장된 데이터가 없을 경우)
+        if (blocks.length === 0) {
+            createBlock();
+        }
+    });
+
+
+</script>
+</body>
+</html>
