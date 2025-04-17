@@ -1,3 +1,4 @@
+// run.js
 const fs = require('fs');
 const path = require('path');
 const cliProgress = require('cli-progress');
@@ -87,6 +88,7 @@ async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId, typeP
         const startTime = new Date();
         try {
             const post = await getPostContent(galleryId, no);
+            if(!post) continue;
             posts.push(post);
         } catch (error) {
             console.error(`게시글 ${no} 크롤링 중 에러 발생: ${error.message}`);
@@ -198,8 +200,12 @@ async function main() {
             fs.mkdirSync(OUTPUT_DIR);
         }
 
-        // 파일명: 타임스탬프 기반
-        const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15);
+        //YYMMDD-HHMMSS.json
+        const timestamp = new Date().toISOString()
+            .slice(2, 19)
+            .replace(/[-:T]/g, '')
+            .replace(/(\d{6})/, '$1-');
+
         const filename = `${timestamp}.json`;
         const filePath = path.join(OUTPUT_DIR, filename);
 
