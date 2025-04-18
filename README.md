@@ -33,7 +33,7 @@ async function example() {
     startPage: 1,
     endPage: 3,
     galleryId: 'programming',
-    exceptionMode: 'all', // 'all', 'recommend', 'notice' 중 하나
+    boardType: 'all', // 'all', 'recommend', 'notice' 중 하나
     delayMs: 100 // 요청 간 딜레이(ms)
   });
   
@@ -106,7 +106,7 @@ async function example() {
     startPage: 1,
     endPage: 3,
     galleryId: 'programming',
-    exceptionMode: 'all',
+    boardType: 'all',
     pageDelayMs: 100,
     postDelayMs: 100,
     onPageProgress: (current, total) => {
@@ -153,7 +153,7 @@ console.log(getRandomUserAgent()); // 무작위 User-Agent 문자열 반환
     totalCount: 5,
     comments: [
       {
-        parent: "0", // 0이면 일반 댓글, 숫자면 해당 번호 댓글에 대한 답글
+        parent: "0", 
         userId: "user_id",
         name: "댓글 작성자",
         ip: "1.2.3.*", // IP 표시가 된 경우에만
@@ -166,11 +166,22 @@ console.log(getRandomUserAgent()); // 무작위 User-Agent 문자열 반환
 }
 ```
 
+## TODO
+
+- [x] 게시판 페이지 크롤링
+- [x] 게시글 본문 가져오기
+- [x] 댓글 가져오기
+- [ ] 게시글 이미지 가져오기
+- [ ] 로그인/로그아웃
+- [ ] 게시글 작성/수정/삭제
+- [ ] 댓글 작성
+- [ ] 댓글 삭제
+- [ ] 추천/비추천
+
 ## 주의사항
 
 - 디시인사이드의 이용약관을 준수해주세요.
 - 과도한 요청은 IP 차단을 유발할 수 있으니 적절한 딜레이(delayMs)를 설정하세요.
-- 개인정보가 포함된 내용을 무단으로 수집하거나 배포하지 마세요.
 - 수집한 데이터는 개인 연구, 분석 등의 비상업적 용도로만 사용해주세요.
 
 ## 라이선스
