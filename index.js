@@ -2,6 +2,20 @@
  * dcinside-crawler
  * 디시인사이드 갤러리 크롤링을 위한 Node.js 라이브러리
  * @module dcinside-crawler
+ * 
+ * TODO:
+ * [x] Board crawling
+ * [x] Fetch document body
+ * [x] Fetch document images
+ * [x] Fetch comments
+ * [ ] Write/Modify/Delete document
+ * [ ] Write comment
+ * [ ] Delete comment
+ * [ ] Login/Logout
+ * [ ] Upvote/Downvote
+ * [ ] Minor gallery support
+ * [ ] Main gallery support
+ * [ ] Mini gallery support
  */
 
 const { scrapeBoardPages, getPostContent } = require('./src/scraper');
@@ -15,19 +29,19 @@ const scraper = require('./src/scraper');
  * @param {number} options.startPage - 시작 페이지 번호
  * @param {number} options.endPage - 끝 페이지 번호
  * @param {string} options.galleryId - 갤러리 ID
- * @param {string} [options.exceptionMode='all'] - 게시판 유형 ('all', 'recommend', 'notice')
+ * @param {string} [options.boardType='all'] - 게시판 유형 ('all', 'recommend', 'notice')
  * @param {number} [options.delayMs=100] - 요청 간 지연 시간(ms)
  * @returns {Promise<string[]>} 수집된 게시글 번호 배열
  */
 async function getPostList(options) {
-  const { startPage, endPage, galleryId, exceptionMode = 'all', delayMs = 100 } = options;
+  const { startPage, endPage, galleryId, boardType = 'all', delayMs = 100 } = options;
   
   return await scrapeBoardPages(
     startPage, 
     endPage, 
     galleryId, 
     { 
-      exception_mode: exceptionMode,
+      boardType,
       delay: delayMs
     }
   );
@@ -91,7 +105,7 @@ async function getPosts(options) {
  * @param {number} options.startPage - 시작 페이지 번호
  * @param {number} options.endPage - 끝 페이지 번호
  * @param {string} options.galleryId - 갤러리 ID
- * @param {string} [options.exceptionMode='all'] - 게시판 유형 ('all', 'recommend', 'notice')
+ * @param {string} [options.boardType='all'] - 게시판 유형 ('all', 'recommend', 'notice')
  * @param {number} [options.pageDelayMs=100] - 페이지 요청 간 지연 시간(ms)
  * @param {number} [options.postDelayMs=100] - 게시글 요청 간 지연 시간(ms)
  * @param {function} [options.onPageProgress] - 페이지 진행 상황 콜백 함수 (current, total)
@@ -103,7 +117,7 @@ async function crawlGalleryPages(options) {
     startPage, 
     endPage, 
     galleryId, 
-    exceptionMode = 'all', 
+    boardType = 'all', 
     pageDelayMs = 100,
     postDelayMs = 100,
     onPageProgress,
@@ -115,7 +129,7 @@ async function crawlGalleryPages(options) {
     startPage,
     endPage,
     galleryId,
-    exceptionMode,
+    boardType,
     delayMs: pageDelayMs,
     onProgress: onPageProgress
   });

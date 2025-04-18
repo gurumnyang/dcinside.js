@@ -36,7 +36,7 @@ declare module "dcinside-crawler" {
     startPage: number;
     endPage: number;
     galleryId: string;
-    exceptionMode?: 'all' | 'recommend' | 'notice';
+    boardType?: 'all' | 'recommend' | 'notice';
     delayMs?: number;
   }
 
@@ -65,7 +65,7 @@ declare module "dcinside-crawler" {
     startPage: number;
     endPage: number;
     galleryId: string;
-    exceptionMode?: 'all' | 'recommend' | 'notice';
+    boardType?: 'all' | 'recommend' | 'notice';
     pageDelayMs?: number;
     postDelayMs?: number;
     onPageProgress?: (current: number, total: number) => void;
@@ -121,7 +121,7 @@ declare module "dcinside-crawler" {
       endPage: number, 
       galleryId: string, 
       options?: { 
-        exception_mode?: string;
+        boardType?: string;
         num?: string | null;
         subject?: string | null;
         nickname?: string | null;

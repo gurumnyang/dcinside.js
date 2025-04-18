@@ -36,7 +36,7 @@ const replaceImagesWithPlaceholder = (element, placeholder = '[이미지]\n') =>
  * @param {number} endPage - 끝 페이지 번호
  * @param {string} galleryId - 갤러리 ID
  * @param {object} options - 크롤링 옵션
- * @param {string} options.exception_mode - 예외 모드 ('all', 'recommend', 'notice')
+ * @param {string} options.boardType - 게시판 유형 ('all', 'recommend', 'notice')
  * @param {string|null} options.num - 게시글 번호 필터
  * @param {string|null} options.subject - 말머리 필터
  * @param {string|null} options.nickname - 닉네임 필터
@@ -45,7 +45,7 @@ const replaceImagesWithPlaceholder = (element, placeholder = '[이미지]\n') =>
  * @returns {Promise<string[]>} - 수집된 게시글 번호 배열
  */
 async function scrapeBoardPages(startPage, endPage, galleryId, options = {
-    exception_mode: 'all',
+    boardType: 'all',
     num: null,
     subject: null,
     nickname: null,
@@ -62,7 +62,7 @@ async function scrapeBoardPages(startPage, endPage, galleryId, options = {
 
     let postNumbers = [];
     for (let page = startPage; page <= endPage; page++) {
-        const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}&list_num=100&search_head=&page=${page}&exception_mode=${options.exception_mode}`;
+        const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}&list_num=100&search_head=&page=${page}&exception_mode=${options.boardType}`;
         try {
             const { data } = await axios.get(url, { headers: HEADERS });
             // console.log(`\n${data.length}\n`)

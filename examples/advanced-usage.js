@@ -31,7 +31,7 @@ async function main() {
       startPage: 1,
       endPage: 2,
       galleryId: galleryId,
-      exceptionMode: 'all',
+      boardType: 'all',
       pageDelayMs: 300,
       postDelayMs: 200,
       onPageProgress: (current, total) => {

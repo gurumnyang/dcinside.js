@@ -10,7 +10,7 @@ async function main() {
       startPage: 1,
       endPage: 1,
       galleryId: 'chatgpt',
-      exceptionMode: 'all'
+      boardType: 'all'
     });
 
     console.log(`총 ${postList.length}개의 게시글 번호 수집 완료`);
