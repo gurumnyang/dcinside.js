@@ -2,7 +2,7 @@
 
 const axios = require('axios');
 const cheerio = require('cheerio');
-const cliProgress = require('cli-progress');
+// cli-progress 제거
 const { delay } = require('./util');
 
 // 상수 정의
@@ -10,44 +10,62 @@ const BASE_URL = 'https://gall.dcinside.com';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
 const HEADERS = { 'User-Agent': USER_AGENT };
 
-// 유틸리티 함수
+/**
+ * 선택자에 해당하는 텍스트를 추출합니다.
+ * @param {CheerioStatic} $ - Cheerio 객체
+ * @param {string} selector - CSS 선택자
+ * @param {string} defaultValue - 텍스트가 없을 경우 반환할 기본값
+ * @returns {string} - 추출된 텍스트 또는 기본값
+ */
 const extractText = ($, selector, defaultValue = '') => {
     return $(selector).text().trim() || defaultValue;
 };
 
+/**
+ * HTML 요소 내의 이미지를 지정된 텍스트로 대체합니다.
+ * @param {CheerioElement} element - 이미지를 포함하는 Cheerio 요소
+ * @param {string} placeholder - 이미지 대체 텍스트
+ */
 const replaceImagesWithPlaceholder = (element, placeholder = '[이미지]\n') => {
     element.find('img').replaceWith(placeholder);
 };
 
-
-// 게시판 페이지 크롤링
 /**
- *
- * @param startPage
- * @param endPage
- * @param galleryId
- * @param options
- * @return {Promise<*[]>}
+ * 게시판 페이지를 크롤링하여 게시글 번호 목록을 반환합니다.
+ * @param {number} startPage - 시작 페이지 번호
+ * @param {number} endPage - 끝 페이지 번호
+ * @param {string} galleryId - 갤러리 ID
+ * @param {object} options - 크롤링 옵션
+ * @param {string} options.exception_mode - 예외 모드 ('all', 'recommend', 'notice')
+ * @param {string|null} options.num - 게시글 번호 필터
+ * @param {string|null} options.subject - 말머리 필터
+ * @param {string|null} options.nickname - 닉네임 필터
+ * @param {string|null} options.ip - IP 필터
+ * @param {number} options.delay - 요청 간 딜레이(ms)
+ * @returns {Promise<string[]>} - 수집된 게시글 번호 배열
  */
 async function scrapeBoardPages(startPage, endPage, galleryId, options = {
     exception_mode: 'all',
     num: null,
     subject: null,
     nickname: null,
-    ip: null
+    ip: null,
+    delay: 100
 }) {
+    // 페이지 범위가 유효하지 않은 경우 빈 배열 반환
+    if (startPage <= 0 || endPage <= 0 || startPage > endPage) {
+        return [];
+    }
+    
     const totalPages = endPage - startPage + 1;
-    const pageBar = new cliProgress.SingleBar({
-        format: '게시판 페이지 번호 수집 |{bar}| {percentage}% || {value}/{total} 페이지',
-        hideCursor: true
-    }, cliProgress.Presets.shades_classic);
-    pageBar.start(totalPages, 0);
+    // console.log(`게시판 페이지 번호 수집 시작 (총 ${totalPages} 페이지)`);
 
     let postNumbers = [];
     for (let page = startPage; page <= endPage; page++) {
         const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}&list_num=100&search_head=&page=${page}&exception_mode=${options.exception_mode}`;
         try {
             const { data } = await axios.get(url, { headers: HEADERS });
+            // console.log(`\n${data.length}\n`)
             const $ = cheerio.load(data);
 
             $('.ub-content').each((_, element) => {
@@ -58,10 +76,15 @@ async function scrapeBoardPages(startPage, endPage, galleryId, options = {
                 const nickname = $(element).find(".gall_writer").attr("data-nick")
                 const ip = $(element).find(".gall_writer").attr("data-ip")
 
-                if(options.num && options.num !== num) return;
-                if(options.subject && options.subject !== subject) return;
-                if(options.nickname && options.nickname !== nickname) return;
-                if(options.ip && options.ip !== ip) return;
+                // 필터 조건에 맞지 않는 게시물은 건너뛰기
+                const shouldSkip = (
+                    (options.num && options.num !== num) ||
+                    (options.subject && options.subject !== subject) ||
+                    (options.nickname && options.nickname !== nickname) ||
+                    (options.ip && options.ip !== ip)
+                );
+                
+                if (shouldSkip) return;
 
                 if (link) {
                     const match = link.match(/no=(\d+)/);
@@ -73,20 +96,27 @@ async function scrapeBoardPages(startPage, endPage, galleryId, options = {
         } catch (error) {
             console.error(`게시판 페이지 ${page} 크롤링 중 에러 발생: ${error.message}`);
         }
-        pageBar.increment()
-        await delay(100); // 요청 간 딜레이
+        // console.log(`페이지 ${page}/${endPage} 처리 완료 (${Math.round((page - startPage + 1) / totalPages * 100)}%)`);
+        await delay(options?.delay); // 요청 간 딜레이
     }
-    pageBar.stop();
+    // console.log(`게시판 페이지 번호 수집 완료, 총 ${postNumbers.length}개 게시글 번호 수집됨`);
 
     return [...new Set(postNumbers)]; // 중복 제거 후 반환
 }
 
 /**
- *
- * @param galleryId
- * @param no
+ * 지정된 게시글 번호의 내용을 크롤링합니다.
+ * @param {string} galleryId - 갤러리 ID (기본값: chatgpt)
+ * @param {string} no - 게시글 번호
+ * @returns {Promise<object|null>} - 게시글 내용 객체 또는 실패 시 null
  */
 async function getPostContent(galleryId="chatgpt", no) {
+    // 게시글 번호가 없거나 유효하지 않은 경우 null 반환
+    if (!no || typeof no !== 'string') {
+        console.error('유효하지 않은 게시글 번호:', no);
+        return null;
+    }
+
     const url = `${BASE_URL}/mgallery/board/view/?id=${galleryId}&no=${no}`;
     try {
         const { data } = await axios.get(url, { headers: HEADERS });
@@ -129,7 +159,13 @@ async function getPostContent(galleryId="chatgpt", no) {
     }
 }
 
-// 댓글 크롤링
+/**
+ * 게시글의 댓글을 크롤링합니다.
+ * @param {string} no - 게시글 번호
+ * @param {string} galleryId - 갤러리 ID
+ * @param {string} e_s_n_o - 댓글 로드에 필요한 CSRF 토큰 값
+ * @returns {Promise<object|null>} - 댓글 정보 객체 또는 실패 시 null
+ */
 async function getCommentsForPost(no, galleryId, e_s_n_o) {
     const url = `${BASE_URL}/board/comment/`;
     const params = new URLSearchParams({

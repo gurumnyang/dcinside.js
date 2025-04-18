@@ -1,0 +1,31 @@
+# 디버깅 및 테스트 관련
+/tests/
+/coverage/
+/.nyc_output/
+*.log
+*.tgz
+
+# 예시 출력 데이터
+/output/
+
+# 개발 환경 관련
+/.vscode/
+/.idea/
+/.git/
+/.github/
+.eslintrc*
+.prettier*
+.editorconfig
+*.tsbuildinfo
+
+# 문서 관련 (README.md는 포함)
+/docs/
+/website/
+
+# 웹 서버 관련
+/web.js
+/views/
+
+# 기타
+.DS_Store
+Thumbs.db
