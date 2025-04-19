@@ -38,8 +38,29 @@ app.post('/api/block/fetchBoardInfo', async (req, res) => {
     try {
         const start = parseInt(startPage, 10);
         const end = parseInt(endPage, 10);
-        const postNumbers = await scrapeBoardPages(start, end, galleryId, { exception_mode: boardType });
-        res.json({ galleryId, startPage: start, endPage: end, boardType, fetchedPosts: postNumbers });
+        
+        let allPostNumbers = [];
+        
+        // 각 페이지별로 크롤링 진행
+        for (let page = start; page <= end; page++) {
+            const pagePostNumbers = await scrapeBoardPages(page, galleryId, { 
+                boardType: boardType 
+            });
+            allPostNumbers.push(...pagePostNumbers);
+            
+            // 페이지 간 약간의 딜레이 추가
+            if (page < end) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+        }
+        
+        res.json({ 
+            galleryId, 
+            startPage: start, 
+            endPage: end, 
+            boardType, 
+            fetchedPosts: allPostNumbers 
+        });
     } catch (error) {
         console.error('fetchBoardInfo error:', error);
         res.status(500).json({ error: error.message });

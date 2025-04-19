@@ -1,29 +1,31 @@
 {
   "name": "dcinside-crawler",
-  "version": "0.1.0",
-  "description": "디시인사이드 갤러리 크롤링 라이브러리",
+  "version": "1.0.0",
+  "description": "디시인사이드 갤러리 크롤링을 위한 Node.js 라이브러리",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "jest --detectOpenHandles",
+    "start": "node run.js",
+    "test": "jest",
     "prepare": "npm test"
   },
   "keywords": [
     "dcinside",
     "crawler",
     "scraper",
+    "nodejs",
     "gallery"
   ],
-  "author": "Your Name",
+  "author": "GurumNyang",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/dcinside-crawler"
+    "url": "https://github.com/GurumNyang/dcinside-crawler"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/dcinside-crawler/issues"
+    "url": "https://github.com/GurumNyang/dcinside-crawler/issues"
   },
-  "homepage": "https://github.com/yourusername/dcinside-crawler#readme",
+  "homepage": "https://github.com/GurumNyang/dcinside-crawler#readme",
   "dependencies": {
     "axios": "^1.8.4",
     "cheerio": "^1.0.0",

@@ -16,25 +16,31 @@ yarn add dcinside-crawler
 
 ## 기능
 
-- 갤러리 페이지 범위로 게시글 목록 수집
+- 갤러리 페이지에서 게시글 목록 수집
 - 게시글 번호로 게시글 내용 가져오기
 - 여러 게시글 내용 한 번에 가져오기
-- 페이지 범위로 모든 게시글 내용 수집
+- 특정 페이지의 모든 게시글 내용 수집
+- 게시글 내의 이미지 URL 추출
+- 모든 댓글 페이지 자동 수집
+- TypeScript 타입 정의 지원
+
+## 필요 사항
+
+- Node.js 16.0.0 이상
+- npm 또는 yarn 패키지 매니저
 
 ## 사용 방법
 
-### 갤러리 페이지 범위로 게시글 목록 수집
+### 갤러리 페이지에서 게시글 목록 수집
 
 ```javascript
 const dcCrawler = require('dcinside-crawler');
 
 async function example() {
   const postList = await dcCrawler.getPostList({
-    startPage: 1,
-    endPage: 3,
+    page: 1,
     galleryId: 'programming',
     boardType: 'all', // 'all', 'recommend', 'notice' 중 하나
-    delayMs: 100 // 요청 간 딜레이(ms)
   });
   
   console.log('수집된 게시글 번호:', postList);
@@ -65,6 +71,28 @@ async function example() {
 example();
 ```
 
+### 이미지 URL 추출하기
+
+```javascript
+const dcCrawler = require('dcinside-crawler');
+
+async function example() {
+  const post = await dcCrawler.getPost({
+    galleryId: 'programming',
+    postNo: '1234567',
+    extractImages: true,        // 이미지 URL 추출 활성화
+    includeImageSource: false   // 본문에 이미지 URL 표시 비활성화
+  });
+  
+  if (post && post.images) {
+    console.log('이미지 URL 목록:', post.images);
+    console.log(`총 ${post.images.length}개 이미지 추출됨`);
+  }
+}
+
+example();
+```
+
 ### 여러 게시글 내용 한 번에 가져오기
 
 ```javascript
@@ -75,6 +103,7 @@ async function example() {
     galleryId: 'programming',
     postNumbers: ['1234567', '1234568', '1234569'],
     delayMs: 100,
+    extractImages: true,  // 모든 게시글에서 이미지 URL 추출
     onProgress: (current, total) => {
       console.log(`진행 상황: ${current}/${total}`);
     }
@@ -86,38 +115,34 @@ async function example() {
 example();
 ```
 
-### 페이지 범위로 게시글 내용 수집
+### 특정 페이지의 게시글 내용 수집
 
 ```javascript
 const dcCrawler = require('dcinside-crawler');
 const cliProgress = require('cli-progress');
 
 async function example() {
-  // 진행 상황 표시용 프로그레스 바
-  const pageBar = new cliProgress.SingleBar({
-    format: '페이지 진행 |{bar}| {percentage}% || {value}/{total}',
+  // 우선 게시글 번호 목록을 가져옴
+  const postList = await dcCrawler.getPostList({
+    page: 1,
+    galleryId: 'programming',
+    boardType: 'all'
   });
   
-  const postBar = new cliProgress.SingleBar({
+  // 진행 상황 표시용 프로그레스 바
+  const progressBar = new cliProgress.SingleBar({
     format: '게시글 진행 |{bar}| {percentage}% || {value}/{total}',
   });
   
-  const posts = await dcCrawler.crawlGalleryPages({
-    startPage: 1,
-    endPage: 3,
+  // 수집한 게시글 번호로 게시글 내용 가져오기
+  const posts = await dcCrawler.getPosts({
     galleryId: 'programming',
-    boardType: 'all',
-    pageDelayMs: 100,
-    postDelayMs: 100,
-    onPageProgress: (current, total) => {
-      if (current === 1) pageBar.start(total, 0);
-      pageBar.update(current);
-      if (current === total) pageBar.stop();
-    },
-    onPostProgress: (current, total) => {
-      if (current === 1) postBar.start(total, 0);
-      postBar.update(current);
-      if (current === total) postBar.stop();
+    postNumbers: postList,
+    delayMs: 100,
+    onProgress: (current, total) => {
+      if (current === 1) progressBar.start(total, 0);
+      progressBar.update(current);
+      if (current === total) progressBar.stop();
     }
   });
   
@@ -162,8 +187,28 @@ console.log(getRandomUserAgent()); // 무작위 User-Agent 문자열 반환
       }
       // ...
     ]
-  }
+  },
+  // 이미지 URL 추출 옵션을 활성화한 경우에만 포함됨
+  images: [
+    "https://example.com/image1.jpg",
+    "https://example.com/image2.jpg"
+  ]
 }
+```
+
+## 에러 처리와 재시도
+
+라이브러리는 요청 실패 시 자동으로 재시도합니다. 기본 설정은 다음과 같습니다:
+- 최대 재시도 횟수: 3회
+- 재시도 간 지연 시간: 1000ms (지수 백오프 적용)
+
+```javascript
+// 설정 옵션
+const options = {
+  retryAttempts: 5,    // 최대 재시도 횟수 변경 
+  retryDelay: 2000     // 재시도 간 지연 시간 변경
+  // 다른 옵션...
+};
 ```
 
 ## TODO
@@ -171,7 +216,9 @@ console.log(getRandomUserAgent()); // 무작위 User-Agent 문자열 반환
 - [x] 게시판 페이지 크롤링
 - [x] 게시글 본문 가져오기
 - [x] 댓글 가져오기
-- [ ] 게시글 이미지 가져오기
+- [x] 게시글 이미지 URL 추출
+- [x] 모든 댓글 페이지 수집
+- [x] 재시도 메커니즘 추가
 - [ ] 로그인/로그아웃
 - [ ] 게시글 작성/수정/삭제
 - [ ] 댓글 작성

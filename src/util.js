@@ -66,9 +66,154 @@ function getRandomUserAgent() {
     return agents[Math.floor(Math.random() * agents.length)];
 }
 
+/**
+ * 크롤링 관련 에러 클래스
+ */
+class CrawlError extends Error {
+    /**
+     * @param {string} message - 에러 메시지
+     * @param {string} type - 에러 유형 ('network', 'parse', 'notFound', 'rate_limit', 'auth', 'unknown')
+     * @param {Error|null} originalError - 원본 에러 객체
+     * @param {object} metadata - 추가 메타데이터
+     */
+    constructor(message, type = 'unknown', originalError = null, metadata = {}) {
+        super(message);
+        this.name = 'CrawlError';
+        this.type = type;
+        this.originalError = originalError;
+        this.metadata = metadata;
+        this.timestamp = new Date();
+        
+        // 원본 에러의 스택 트레이스 보존
+        if (originalError && originalError.stack) {
+            this.stack = `${this.stack}\nCaused by: ${originalError.stack}`;
+        }
+    }
+    
+    /**
+     * 에러 로그를 콘솔에 출력합니다.
+     * @param {boolean} verbose - 상세 정보 포함 여부
+     */
+    logError(verbose = false) {
+        console.error(`[${this.timestamp.toISOString()}] ${this.name}(${this.type}): ${this.message}`);
+        
+        if (verbose) {
+            if (Object.keys(this.metadata).length) {
+                console.error('메타데이터:', this.metadata);
+            }
+            if (this.originalError) {
+                console.error('원본 에러:', this.originalError);
+            }
+        }
+    }
+    
+    /**
+     * 재시도 가능한 에러인지 확인합니다.
+     * @returns {boolean} - 재시도 가능 여부
+     */
+    isRetryable() {
+        return ['network', 'rate_limit', 'server'].includes(this.type);
+    }
+}
+
+/**
+ * HTTP 상태 코드에 따라 적절한 에러 객체를 생성합니다.
+ * @param {Error} error - Axios 에러 객체
+ * @param {string} defaultMessage - 기본 에러 메시지
+ * @param {object} metadata - 추가 메타데이터
+ * @returns {CrawlError} - CrawlError 인스턴스
+ */
+const createHttpError = (error, defaultMessage, metadata = {}) => {
+    const status = error.response?.status;
+    const url = error.config?.url || '';
+    
+    // HTTP 상태 코드별 에러 유형 결정
+    let type = 'network';
+    let message = defaultMessage;
+    
+    if (status) {
+        if (status === 404) {
+            type = 'notFound';
+            message = `리소스를 찾을 수 없습니다: ${url}`;
+        } else if (status === 429) {
+            type = 'rate_limit';
+            message = `요청 한도 초과: ${url}`;
+        } else if (status === 403) {
+            type = 'auth';
+            message = `접근이 거부되었습니다: ${url}`;
+        } else if (status >= 500) {
+            type = 'server';
+            message = `서버 에러 (${status}): ${url}`;
+        }
+    } else if (error.code === 'ECONNABORTED') {
+        type = 'timeout';
+        message = `요청 시간 초과: ${url}`;
+    } else if (error.code === 'ECONNREFUSED') {
+        type = 'connection';
+        message = `연결이 거부되었습니다: ${url}`;
+    }
+    
+    return new CrawlError(message, type, error, {
+        ...metadata,
+        url,
+        status
+    });
+};
+
+/**
+ * 지정된 함수를 재시도하는 래퍼 함수
+ * @param {Function} fn - 실행할 함수
+ * @param {object} options - 재시도 옵션
+ * @param {number} options.maxRetries - 최대 재시도 횟수
+ * @param {number} options.delayMs - 재시도 간 지연 시간(ms)
+ * @param {boolean} options.exponentialBackoff - 지수 증가 지연 사용 여부
+ * @returns {Promise<any>} - 함수 실행 결과
+ */
+const withRetry = async (fn, options = {}) => {
+    const { 
+        maxRetries = 3, 
+        delayMs = 1000, 
+        exponentialBackoff = true 
+    } = options;
+    
+    let lastError;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            lastError = error;
+            
+            // 재시도 가능한 에러인지 확인
+            if (error instanceof CrawlError && !error.isRetryable()) {
+                throw error;
+            }
+            
+            // 마지막 시도였다면 에러 던지기
+            if (attempt === maxRetries) {
+                throw error;
+            }
+            
+            // 다음 시도까지 대기
+            const waitTime = exponentialBackoff 
+                ? delayMs * Math.pow(2, attempt) 
+                : delayMs;
+                
+            console.warn(`시도 ${attempt + 1}/${maxRetries + 1} 실패. ${waitTime}ms 후 재시도...`);
+            await delay(waitTime);
+        }
+    }
+    
+    // 여기까지 오면 모든 시도 실패
+    throw lastError;
+};
+
 module.exports = {
     askQuestion,
     validateNumberInput,
     delay,
-    getRandomUserAgent
-}
+    getRandomUserAgent,
+    CrawlError,
+    createHttpError,
+    withRetry
+};

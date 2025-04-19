@@ -2,8 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 const cliProgress = require('cli-progress');
-const { getPostContent, scrapeBoardPages } = require('./src/scraper');
-const { askQuestion, validateNumberInput, delay } = require('./src/util');
+const { getPostList, getPost, getPosts, delay } = require('./index');
+const { askQuestion, validateNumberInput } = require('./src/util');
 
 const OUTPUT_DIR = './output';
 
@@ -32,26 +32,16 @@ async function scrapePostsWithProgress(startNo, endNo, galleryId) {
 async function scrapePostsWithArray(numbers, galleryId) {
     const totalPosts = numbers.length;
     const progressBar = new cliProgress.SingleBar({
-        format: '게시글 번호 크롤링 진행 |{bar}| {percentage}% || {value}/{total} 게시글',
+        format: '게시글 크롤링 진행 |{bar}| {percentage}% || {value}/{total} 게시글',
         hideCursor: true
     }, cliProgress.Presets.shades_classic);
     progressBar.start(totalPosts, 0);
-
-    const posts = [];
-    for (const no of numbers) {
-        try {
-            const post = await getPostContent(galleryId, no);
-            if (!post) {
-                console.error(`게시글 ${no} 크롤링 실패`);
-                continue;
-            }
-            posts.push(post);
-        } catch (error) {
-            console.error(`게시글 ${no} 크롤링 중 에러 발생: ${error.message}`);
-        }
-        progressBar.increment();
-        await delay(50);
-    }
+    const posts = await getPosts({
+        galleryId,
+        postNumbers: numbers,
+        delayMs: 50,
+        onProgress: () => progressBar.increment()
+    });
     progressBar.stop();
     return posts;
 }
@@ -65,41 +55,52 @@ async function scrapePostsWithArray(numbers, galleryId) {
  * @returns {Promise<Object[]>} 크롤링된 게시글 배열
  */
 async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId, typeParam = 'all') {
+    // 게시글 번호 수집
     let postNumbers = [];
-    try {
-        postNumbers = await scrapeBoardPages(startPage, endPage, galleryId, { exception_mode: typeParam });
-    } catch (error) {
-        console.error(`게시판 페이지 크롤링 중 에러 발생: ${error.message}`);
+    
+    // 페이지 진행상황 표시 막대
+    const pageBar = new cliProgress.SingleBar({
+        format: '페이지 진행 |{bar}| {percentage}% || {value}/{total} 페이지',
+        hideCursor: true
+    }, cliProgress.Presets.shades_classic);
+    
+    pageBar.start(endPage - startPage + 1, 0);
+    
+    // 각 페이지별로 게시글 번호 수집
+    for (let page = startPage; page <= endPage; page++) {
+        const pagePostNumbers = await getPostList({
+            page,
+            galleryId,
+            boardType: typeParam,
+            delayMs: 10
+        });
+        postNumbers.push(...pagePostNumbers);
+        pageBar.increment();
+        await delay(100); // 페이지 간 딜레이
     }
-
+    
+    pageBar.stop();
+    
     // 중복 제거
     postNumbers = Array.from(new Set(postNumbers));
-
     const totalPosts = postNumbers.length;
+    
+    // 게시글 크롤링 진행상황 표시 막대
     const progressBar = new cliProgress.SingleBar({
         format: '게시글 크롤링 진행 |{bar}| {percentage}% || {value}/{total} 게시글',
         hideCursor: true
     }, cliProgress.Presets.shades_classic);
+    
     progressBar.start(totalPosts, 0);
-
-    const delayMs = 10; // 요청 간 딜레이(ms)
-    const posts = [];
-    for (const no of postNumbers) {
-        const startTime = new Date();
-        try {
-            const post = await getPostContent(galleryId, no);
-            if(!post) continue;
-            posts.push(post);
-        } catch (error) {
-            console.error(`게시글 ${no} 크롤링 중 에러 발생: ${error.message}`);
-        }
-        progressBar.increment();
-
-        const elapsedTime = new Date() - startTime;
-        if (elapsedTime < delayMs) {
-            await delay(delayMs - elapsedTime);
-        }
-    }
+    
+    // 수집된 게시글 번호로 게시글 내용 크롤링
+    const posts = await getPosts({
+        galleryId,
+        postNumbers,
+        delayMs: 10,
+        onProgress: () => progressBar.increment()
+    });
+    
     progressBar.stop();
     return posts;
 }

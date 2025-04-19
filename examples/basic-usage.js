@@ -7,8 +7,7 @@ async function main() {
   try {
     console.log('갤러리에서 게시글 번호 수집 중...');
     const postList = await dcCrawler.getPostList({
-      startPage: 1,
-      endPage: 1,
+      page: 1,
       galleryId: 'chatgpt',
       boardType: 'all'
     });
