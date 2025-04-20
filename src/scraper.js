@@ -203,7 +203,7 @@ const replaceImagesWithPlaceholder = (element, placeholder = '[이미지]\n') =>
  * @param {string|null} options.ip - IP 필터
  * @returns {Promise<string[]>} - 수집된 게시글 번호 배열
  */
-async function scrapeBoardPages(page, galleryId, options = {
+async function scrapeBoardPage(page, galleryId, options = {
     boardType: 'all',
     num: null,
     subject: null,
@@ -412,7 +412,8 @@ async function getCommentsForPost(no, galleryId, e_s_n_o) {
 
 
 module.exports = {
-    scrapeBoardPages,
+    scrapeBoardPages: scrapeBoardPage,
+    scrapeBoardPage,
     getPostContent,
     getCommentsForPost,  // 댓글 수집 함수 외부 노출
     extractText,         // 유틸리티 함수 외부 노출

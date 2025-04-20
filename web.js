@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { scrapeBoardPages, getPostContent } = require('./src/scraper');
+const { scrapeBoardPage, getPostContent } = require('./src/scraper');
 
 const app = express();
 
@@ -43,7 +43,7 @@ app.post('/api/block/fetchBoardInfo', async (req, res) => {
         
         // 각 페이지별로 크롤링 진행
         for (let page = start; page <= end; page++) {
-            const pagePostNumbers = await scrapeBoardPages(page, galleryId, { 
+            const pagePostNumbers = await scrapeBoardPage(page, galleryId, { 
                 boardType: boardType 
             });
             allPostNumbers.push(...pagePostNumbers);

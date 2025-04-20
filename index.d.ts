@@ -142,7 +142,7 @@ declare module "dcinside-crawler" {
    * 원본 스크레이퍼 함수들
    */
   export const raw: {
-    scrapeBoardPages: (
+    scrapeBoardPage: (
       page: number, 
       galleryId: string, 
       options?: { 

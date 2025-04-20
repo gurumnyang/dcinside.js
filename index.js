@@ -4,7 +4,7 @@
  * @module dcinside-crawler
  */
 
-const { scrapeBoardPages, getPostContent } = require('./src/scraper');
+const { scrapeBoardPage, getPostContent } = require('./src/scraper');
 const { delay, getRandomUserAgent } = require('./src/util');
 const scraper = require('./src/scraper');
 
@@ -20,7 +20,7 @@ const scraper = require('./src/scraper');
 async function getPostList(options) {
   const { page, galleryId, boardType = 'all'} = options;
   
-  return await scrapeBoardPages(
+  return await scrapeBoardPage(
     page, 
     galleryId, 
     { 
