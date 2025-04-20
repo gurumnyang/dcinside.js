@@ -1,7 +1,7 @@
 /**
- * dcinside-crawler
+ * @gurumnyang/dcinside.js
  * 디시인사이드 갤러리 크롤링을 위한 Node.js 라이브러리
- * @module dcinside-crawler
+ * @module @gurumnyang/dcinside.js
  */
 
 const { scrapeBoardPage, getPostContent } = require('./src/scraper');

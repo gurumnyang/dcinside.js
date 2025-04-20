@@ -1,7 +1,7 @@
 // advanced-usage.js
 // 프로그레스 바를 이용한 고급 사용법 예제
 
-const dcCrawler = require('../index'); // 실제 사용 시에는 'dcinside-crawler'
+const dcCrawler = require('../index'); // 실제 사용 시에는 '@gurumnyang/dcinside.js'
 const cliProgress = require('cli-progress');
 const fs = require('fs');
 const path = require('path');

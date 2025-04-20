@@ -1,4 +1,4 @@
-declare module "dcinside-crawler" {
+declare module "@gurumnyang/dcinside.js" {
   /**
    * 게시글 데이터 타입
    */

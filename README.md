@@ -1,17 +1,17 @@
-# dcinside-crawler
+# @gurumnyang/dcinside.js
 
 디시인사이드 갤러리 크롤링을 위한 Node.js 라이브러리입니다.
 
 ## 설치 방법
 
 ```bash
-npm install dcinside-crawler
+npm install @gurumnyang/dcinside.js
 ```
 
 또는
 
 ```bash
-yarn add dcinside-crawler
+yarn add @gurumnyang/dcinside.js
 ```
 
 ## 기능
@@ -34,7 +34,7 @@ yarn add dcinside-crawler
 ### 갤러리 페이지에서 게시글 목록 수집
 
 ```javascript
-const dcCrawler = require('dcinside-crawler');
+const dcCrawler = require('@gurumnyang/dcinside.js');
 
 async function example() {
   const postList = await dcCrawler.getPostList({
@@ -52,7 +52,7 @@ example();
 ### 게시글 번호로 게시글 내용 가져오기
 
 ```javascript
-const dcCrawler = require('dcinside-crawler');
+const dcCrawler = require('@gurumnyang/dcinside.js');
 
 async function example() {
   const post = await dcCrawler.getPost({
@@ -74,7 +74,7 @@ example();
 ### 이미지 URL 추출하기
 
 ```javascript
-const dcCrawler = require('dcinside-crawler');
+const dcCrawler = require('@gurumnyang/dcinside.js');
 
 async function example() {
   const post = await dcCrawler.getPost({
@@ -96,7 +96,7 @@ example();
 ### 여러 게시글 내용 한 번에 가져오기
 
 ```javascript
-const dcCrawler = require('dcinside-crawler');
+const dcCrawler = require('@gurumnyang/dcinside.js');
 
 async function example() {
   const posts = await dcCrawler.getPosts({
@@ -118,7 +118,7 @@ example();
 ### 특정 페이지의 게시글 내용 수집
 
 ```javascript
-const dcCrawler = require('dcinside-crawler');
+const dcCrawler = require('@gurumnyang/dcinside.js');
 const cliProgress = require('cli-progress');
 
 async function example() {
@@ -155,7 +155,7 @@ example();
 ### User-Agent 관련 유틸리티 함수
 
 ```javascript
-const { getRandomUserAgent } = require('dcinside-crawler');
+const { getRandomUserAgent } = require('@gurumnyang/dcinside.js');
 
 console.log(getRandomUserAgent()); // 무작위 User-Agent 문자열 반환
 ```

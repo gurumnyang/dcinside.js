@@ -1,7 +1,7 @@
 // basic-usage.js
 // 기본적인 라이브러리 사용 예제
 
-const dcCrawler = require('../index'); // 실제 사용 시에는 'dcinside-crawler'
+const dcCrawler = require('../index'); // 실제 사용 시에는 '@gurumnyang/dcinside.js'
 
 async function main() {
   try {

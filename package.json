@@ -1,5 +1,5 @@
 {
-  "name": "dcinside-crawler",
+  "name": "@gurumnyang/dcinside.js",
   "version": "1.0.0",
   "description": "디시인사이드 갤러리 크롤링을 위한 Node.js 라이브러리",
   "main": "index.js",
@@ -20,22 +20,22 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GurumNyang/dcinside-crawler"
+    "url": "git+https://github.com/GurumNyang/dcinside.js.git"
   },
   "bugs": {
-    "url": "https://github.com/GurumNyang/dcinside-crawler/issues"
+    "url": "https://github.com/GurumNyang/dcinside.js/issues"
   },
-  "homepage": "https://github.com/GurumNyang/dcinside-crawler#readme",
+  "homepage": "https://github.com/GurumNyang/dcinside.js#readme",
   "dependencies": {
     "axios": "^1.8.4",
     "cheerio": "^1.0.0",
     "cli-progress": "^3.12.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "ejs": "^3.1.10", 
+    "ejs": "^3.1.10",
     "express": "^5.1.0",
-    "inquirer": "^8.2.6"
+    "inquirer": "^8.2.6",
+    "jest": "^29.7.0"
   },
   "files": [
     "index.js",

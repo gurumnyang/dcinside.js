@@ -3,7 +3,7 @@ const dcCrawler = require('../index');
 
 jest.setTimeout(30000); // 네트워크 테스트는 시간 여유를 둠
 
-describe('dcinside-crawler 라이브러리 주요 API 테스트', () => {
+describe('@gurumnyang/dcinside.js 라이브러리 주요 API 테스트', () => {
   // 테스트에 사용할 갤러리 ID
   const testGalleryId = 'chatgpt';
   

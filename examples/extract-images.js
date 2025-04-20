@@ -1,4 +1,5 @@
 // extract-images.js - 이미지 URL 추출 기능 예제
+// 실제 사용 시에는 '@gurumnyang/dcinside.js'의 함수 사용
 
 const fs = require('fs');
 const path = require('path');
