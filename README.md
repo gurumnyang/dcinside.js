@@ -261,6 +261,78 @@ const options = {
 };
 ```
 
+## API 레퍼런스
+
+### 핵심 함수
+
+#### `getPostList(options)`
+
+갤러리 페이지에서 게시글 목록을 수집합니다.
+
+**매개변수:**
+- `options` (객체)
+  - `page` (숫자): 페이지 번호
+  - `galleryId` (문자열): 갤러리 ID
+  - `boardType` (문자열, 선택): 게시판 유형 ('all', 'recommend', 'notice' 중 하나, 기본값: 'all')
+  - `delayMs` (숫자, 선택): 요청 간 지연 시간(ms)
+
+**반환값:**
+- `Promise<PostInfo[]>`: 게시글 정보 객체의 배열
+
+#### `getPost(options)`
+
+게시글 번호로 게시글 내용을 가져옵니다.
+
+**매개변수:**
+- `options` (객체)
+  - `galleryId` (문자열): 갤러리 ID
+  - `postNo` (문자열 또는 숫자): 게시글 번호
+  - `extractImages` (불리언, 선택): 이미지 URL 추출 여부 (기본값: false)
+  - `includeImageSource` (불리언, 선택): 본문에 이미지 URL 포함 여부 (기본값: false)
+
+**반환값:**
+- `Promise<Post | null>`: 게시글 객체 또는 실패 시 null
+
+#### `getPosts(options)`
+
+여러 게시글 번호로 게시글 내용을 가져옵니다.
+
+**매개변수:**
+- `options` (객체)
+  - `galleryId` (문자열): 갤러리 ID
+  - `postNumbers` (문자열 또는 숫자의 배열): 게시글 번호 배열
+  - `delayMs` (숫자, 선택): 요청 간 지연 시간(ms) (기본값: 100)
+  - `extractImages` (불리언, 선택): 이미지 URL 추출 여부
+  - `includeImageSource` (불리언, 선택): 본문에 이미지 URL 포함 여부
+  - `onProgress` (함수, 선택): 진행 상황 콜백 함수 (current, total)
+  - `retryAttempts` (숫자, 선택): 최대 재시도 횟수
+  - `retryDelay` (숫자, 선택): 재시도 간 지연 시간(ms)
+
+**반환값:**
+- `Promise<Post[]>`: 수집된 게시글 객체 배열
+
+### 유틸리티 함수
+
+#### `delay(ms)`
+
+지정된 시간(밀리초) 동안 실행을 지연시킵니다.
+
+**매개변수:**
+- `ms` (숫자): 지연할 시간(밀리초)
+
+**반환값:**
+- `Promise<void>`
+
+#### `getRandomUserAgent()`
+
+무작위 User-Agent 문자열을 반환합니다.
+
+**매개변수:**
+- 없음
+
+**반환값:**
+- `string`: 무작위 User-Agent 문자열
+
 ## TODO
 
 - [x] 게시판 페이지 크롤링
