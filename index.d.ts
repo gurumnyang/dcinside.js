@@ -32,6 +32,39 @@ declare module "@gurumnyang/dcinside.js" {
   }
 
   /**
+   * 게시글 정보 객체 타입
+   */
+  export interface PostInfo {
+    /** 게시글 번호 */
+    id: string;
+    /** 게시글 유형 ('notice', 'picture', 'text', 'recommended', 'unknown') */
+    type: string;
+    /** 말머리 */
+    subject: string;
+    /** 게시글 제목 */
+    title: string;
+    /** 게시글 링크 */
+    link: string;
+    /** 작성자 정보 */
+    author: {
+      /** 작성자 닉네임 */
+      nickname: string;
+      /** 작성자 ID */
+      userId: string;
+      /** 작성자 IP */
+      ip: string;
+    };
+    /** 작성 날짜 */
+    date: string;
+    /** 조회수 */
+    count: number;
+    /** 추천수 */
+    recommend: number;
+    /** 댓글 수 */
+    replyCount: number;
+  }
+
+  /**
    * getPostList 함수의 옵션 타입
    */
   export interface GetPostListOptions {
@@ -84,9 +117,9 @@ declare module "@gurumnyang/dcinside.js" {
   }
 
   /**
-   * 페이지 범위로 게시글 번호 목록을 수집합니다.
+   * 페이지 범위로 게시글 목록을 수집합니다.
    */
-  export function getPostList(options: GetPostListOptions): Promise<string[]>;
+  export function getPostList(options: GetPostListOptions): Promise<PostInfo[]>;
 
   /**
    * 게시글 번호로 게시글 내용을 가져옵니다.
@@ -147,12 +180,12 @@ declare module "@gurumnyang/dcinside.js" {
       galleryId: string, 
       options?: { 
         boardType?: string;
-        num?: string | null;
+        id?: string | null;
         subject?: string | null;
         nickname?: string | null;
         ip?: string | null;
       }
-    ) => Promise<string[]>;
+    ) => Promise<PostInfo[]>;
     
     getPostContent: (
       galleryId: string, 

@@ -3,11 +3,14 @@ const { scrapeBoardPage, getPostContent } = require('../src/scraper');
 jest.setTimeout(20000); // 네트워크 테스트는 시간 여유를 둠
 
 describe('scraper 주요 기능', () => {
+
+    const testPostNo = '22690'; // 실제 게시글 번호로 대체 필요
+
     test('scrapeBoardPage 게시글 번호 배열 반환', async () => {
         const posts = await scrapeBoardPage(1, 'chatgpt', { boardType: 'all' });
         expect(Array.isArray(posts)).toBe(true);
         expect(posts.length).toBeGreaterThan(0);
-        expect(typeof posts[0]).toBe('string');
+        expect(typeof posts[0]).toBe('object');
     });
 
     test('scrapeBoardPage: 잘못된 갤러리 ID 입력 시 빈 배열 반환', async () => {
@@ -18,8 +21,7 @@ describe('scraper 주요 기능', () => {
 
     test('getPostContent: 게시글 상세 정보 반환', async () => {
         // 실제 게시글 번호를 사용해야 하므로, 위 테스트에서 얻은 번호를 사용
-        const posts = await scrapeBoardPage(1, 'chatgpt', { boardType: 'all' });
-        const post = await getPostContent('chatgpt', posts[0]);
+        const post = await getPostContent('chatgpt', testPostNo);
         expect(post).toHaveProperty('postNo');
         expect(post).toHaveProperty('title');
         expect(post).toHaveProperty('author');

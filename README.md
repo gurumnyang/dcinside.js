@@ -43,7 +43,33 @@ async function example() {
     boardType: 'all', // 'all', 'recommend', 'notice' 중 하나
   });
   
-  console.log('수집된 게시글 번호:', postList);
+  console.log('수집된 게시글 정보:', postList);
+  // 각 게시글의 id, 제목, 작성자, 조회수 등의 정보가 포함되어 있음
+}
+
+example();
+```
+
+### 갤러리 게시판 페이지에서 게시글 데이터 불러오기(raw API)
+
+```javascript
+const dcCrawler = require('@gurumnyang/dcinside.js');
+
+async function example() {
+  const postInfoList = await dcCrawler.raw.scrapeBoardPage(
+    1,
+    'programming',
+    {
+      boardType: 'all', // 'all', 'recommend', 'notice' 중 하나
+      id: null,        // 특정 번호만 필터링하려면 지정
+      subject: null,    // 특정 말머리만 필터링하려면 지정
+      nickname: null,   // 특정 닉네임만 필터링하려면 지정
+      ip: null          // 특정 IP만 필터링하려면 지정
+    }
+  );
+  
+  console.log('수집된 게시글 정보:', postInfoList);
+  // 수집된 각 게시글의 제목, 작성자, 조회수 등 모든 정보 확인 가능
 }
 
 example();
@@ -122,12 +148,15 @@ const dcCrawler = require('@gurumnyang/dcinside.js');
 const cliProgress = require('cli-progress');
 
 async function example() {
-  // 우선 게시글 번호 목록을 가져옴
-  const postList = await dcCrawler.getPostList({
+  // 우선 게시글 정보 목록을 가져옴
+  const postInfoList = await dcCrawler.getPostList({
     page: 1,
     galleryId: 'programming',
     boardType: 'all'
   });
+  
+  // 게시글 번호만 추출
+  const postNumbers = postInfoList.map(post => post.id);
   
   // 진행 상황 표시용 프로그레스 바
   const progressBar = new cliProgress.SingleBar({
@@ -137,7 +166,7 @@ async function example() {
   // 수집한 게시글 번호로 게시글 내용 가져오기
   const posts = await dcCrawler.getPosts({
     galleryId: 'programming',
-    postNumbers: postList,
+    postNumbers: postNumbers,
     delayMs: 100,
     onProgress: (current, total) => {
       if (current === 1) progressBar.start(total, 0);
@@ -193,6 +222,27 @@ console.log(getRandomUserAgent()); // 무작위 User-Agent 문자열 반환
     "https://example.com/image1.jpg",
     "https://example.com/image2.jpg"
   ]
+}
+```
+
+### 게시글 정보 객체 (PostInfo)
+
+```javascript
+{
+  id: "1234567",               // 게시글 번호
+  type: "picture",              // 게시글 유형 ('notice', 'picture', 'text', 'recommended', 'unknown')
+  subject: "일반",              // 말머리
+  title: "게시글 제목입니다",    // 게시글 제목
+  link: "https://gall.dcinside.com/mgallery/board/view/?id=programming&no=1234567", // 게시글 링크
+  author: {
+    nickname: "작성자닉네임",    // 작성자 닉네임
+    userId: "writer_id",        // 작성자 ID (있는 경우만)
+    ip: "1.2.3.*"              // 작성자 IP (표시된 경우만)
+  },
+  date: "2025.04.21 12:34:56",  // 작성 날짜
+  count: 123,                   // 조회수
+  recommend: 10,                // 추천수
+  replyCount: 5                 // 댓글 수
 }
 ```
 
