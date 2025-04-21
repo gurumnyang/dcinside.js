@@ -1,4 +1,3 @@
-
 const fs = require('fs');
 //csv로 저장하기 위한 모듈
 const path = require('path');
@@ -59,11 +58,11 @@ const main = async () => {
             item.content = item.content.replace(/\n/g, '\\n');
         }
         if (item.comments) {
-            item.comments = item.comments.comments.map(comment => {
+            item.comments = item.comments.items.map(comment => {
                 if (comment.memo) {
                     comment.memo = comment.memo.replace(/\n/g, '\\n');
                 }
-                comment = `${comment.userId}/${comment.name}/${comment.ip}/${comment.memo}`;
+                comment = `${comment.author.userId}/${comment.author.nickname}/${comment.author.ip}/${comment.memo}`;
                 return comment;
             });
             item.comments = item.comments.join('|');

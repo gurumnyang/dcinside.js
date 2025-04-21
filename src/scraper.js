@@ -462,11 +462,15 @@ async function getCommentsForPost(no, galleryId, e_s_n_o) {
             // 이 페이지의 댓글 처리
             const processedComments = comments.map(comment => ({
                 parent: comment.parent,
-                userId: comment.user_id,
-                name: comment.name,
-                ip: comment.ip,
+                id: comment.no,
+                author: {
+                    nickname: comment.name,
+                    userId: comment.user_id,
+                    ip: comment.ip
+                },
                 regDate: comment.reg_date,
-                memo: comment.memo
+                memo: comment.memo,
+                isDeleted: comment.is_delete
             })).filter(comment => comment.name !== '댓글돌이' || comment.ip !== '');
 
             allComments = [...allComments, ...processedComments];
@@ -481,7 +485,7 @@ async function getCommentsForPost(no, galleryId, e_s_n_o) {
             currentPage++;
         }
 
-        return { totalCount, comments: allComments };
+        return { totalCount, items: allComments };
     } catch (error) {
         console.error(`댓글 불러오기 에러 (게시글 ${no}): ${error.message} (URL: ${url})`);
         return null;

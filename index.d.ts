@@ -21,11 +21,14 @@ declare module "@gurumnyang/dcinside.js" {
    */
   export interface Comments {
     totalCount: number;
-    comments: Array<{
+    items: Array<{
       parent: string;
-      userId: string;
-      name: string;
-      ip: string;
+      id: string;
+      author: {
+        nickname: string;
+        userId: string;
+        ip: string;
+      };
       regDate: string;
       memo: string;
     }>;

@@ -185,9 +185,12 @@ console.log(getRandomUserAgent()); // 무작위 User-Agent 문자열 반환
     comments: [
       {
         parent: "0", 
-        userId: "user_id",
-        name: "댓글 작성자",
-        ip: "1.2.3.*", // IP 표시가 된 경우에만
+        id: "comment_id",
+        author: {
+          userId: "user_id",
+          nickname: "댓글 작성자",
+          ip: "1.2.3.*" // IP 표시가 된 경우에만
+        },
         regDate: "01.01 12:34:56",
         memo: "댓글 내용"
       }
