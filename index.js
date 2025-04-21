@@ -9,13 +9,31 @@ const { delay, getRandomUserAgent } = require('./src/util');
 const scraper = require('./src/scraper');
 
 /**
- * 특정 페이지의 게시글 번호 목록을 수집합니다.
+ * 게시글 정보 객체 타입 정의
+ * @typedef {Object} PostInfo
+ * @property {string} num - 게시글 번호
+ * @property {string} type - 게시글 유형 ('notice', 'picture', 'text', 'recommended', 'unknown')
+ * @property {string} subject - 말머리
+ * @property {string} title - 게시글 제목
+ * @property {string} link - 게시글 URL
+ * @property {Object} author - 작성자 정보
+ * @property {string} author.nickname - 작성자 닉네임
+ * @property {string} author.userId - 작성자 ID
+ * @property {string} author.ip - 작성자 IP
+ * @property {string} date - 작성 날짜
+ * @property {number} count - 조회수
+ * @property {number} recommend - 추천수
+ * @property {number} replyCount - 댓글 수
+ */
+
+/**
+ * 특정 페이지의 게시글 목록을 수집합니다.
  *
  * @param {Object} options - 크롤링 옵션
  * @param {number} options.page - 페이지 번호
  * @param {string} options.galleryId - 갤러리 ID
  * @param {string} [options.boardType='all'] - 게시판 유형 ('all', 'recommend', 'notice')
- * @returns {Promise<string[]>} 수집된 게시글 번호 배열
+ * @returns {Promise<Array<PostInfo>>}
  */
 async function getPostList(options) {
   const { page, galleryId, boardType = 'all'} = options;

@@ -6,6 +6,8 @@ jest.setTimeout(30000); // 네트워크 테스트는 시간 여유를 둠
 describe('@gurumnyang/dcinside.js 라이브러리 주요 API 테스트', () => {
   // 테스트에 사용할 갤러리 ID
   const testGalleryId = 'chatgpt';
+  const testPostNo = '22690'; // 실제 게시글 번호로 대체 필요
+  const testImagePostNo = '22720'
   
   describe('getPostList 함수', () => {
     test('갤러리 게시글 번호 목록을 반환해야 함', async () => {
@@ -17,7 +19,18 @@ describe('@gurumnyang/dcinside.js 라이브러리 주요 API 테스트', () => {
       
       expect(Array.isArray(postList)).toBe(true);
       expect(postList.length).toBeGreaterThan(0);
-      expect(typeof postList[0]).toBe('string');
+      expect(typeof postList[0]).toBe('object');
+      expect(postList[0]).toHaveProperty('id');
+      expect(postList[0]).toHaveProperty('title');
+      expect(postList[0]).toHaveProperty('link');
+      expect(postList[0]).toHaveProperty('author');
+      expect(postList[0]).toHaveProperty('date');
+      expect(postList[0]).toHaveProperty('count');
+      expect(postList[0]).toHaveProperty('recommend');
+      expect(postList[0]).toHaveProperty('replyCount');
+      expect(postList[0]).toHaveProperty('type');
+      expect(postList[0]).toHaveProperty('subject');
+      expect(postList[0].type).toMatch(/notice|picture|text|recommended|survey|unknown/);
     });
 
     test('잘못된 갤러리 ID로 호출 시 빈 배열 반환', async () => {
@@ -52,55 +65,35 @@ describe('@gurumnyang/dcinside.js 라이브러리 주요 API 테스트', () => {
 
   describe('getPost 함수', () => {
     test('게시글 상세 정보 반환', async () => {
-      // 먼저 게시글 번호 목록을 가져온 후 첫번째 게시글을 테스트
-      const postList = await dcCrawler.getPostList({
-        page: 1,
+
+      const post = await dcCrawler.getPost({
         galleryId: testGalleryId,
-        boardType: 'all'
+        postNo: testPostNo
       });
       
-      // 게시글이 있는 경우에만 테스트
-      if (postList.length > 0) {
-        const post = await dcCrawler.getPost({
-          galleryId: testGalleryId,
-          postNo: postList[0]
-        });
-        
-        expect(post).not.toBeNull();
-        expect(post).toHaveProperty('postNo');
-        expect(post).toHaveProperty('title');
-        expect(post).toHaveProperty('author');
-        expect(post).toHaveProperty('date');
-        expect(post).toHaveProperty('content');
-        expect(post).toHaveProperty('comments');
-        expect(post.comments).toHaveProperty('totalCount');
-        expect(post.comments).toHaveProperty('comments');
-        expect(Array.isArray(post.comments.comments)).toBe(true);
-      }
+      expect(post).not.toBeNull();
+      expect(post).toHaveProperty('postNo');
+      expect(post).toHaveProperty('title');
+      expect(post).toHaveProperty('author');
+      expect(post).toHaveProperty('date');
+      expect(post).toHaveProperty('content');
+      expect(post).toHaveProperty('comments');
+      expect(post.comments).toHaveProperty('totalCount');
+      expect(post.comments).toHaveProperty('comments');
+      expect(Array.isArray(post.comments.comments)).toBe(true);
     });
 
-    test('이미지 URL 추출 옵션 테스트', async () => {
-      const postList = await dcCrawler.getPostList({
-        page: 1,
-        galleryId: testGalleryId,
-        boardType: 'all'
-      });
+    // @todo
+    // test('이미지 URL 추출 옵션 테스트', async () => {
+    //   const post = await dcCrawler.getPost({
+    //     galleryId: testGalleryId,
+    //     postNo: testImagePostNo,
+    //     extractImages: true
+    //   });
       
-      // 게시글이 있는 경우에만 테스트
-      if (postList.length > 0) {
-        const post = await dcCrawler.getPost({
-          galleryId: testGalleryId,
-          postNo: postList[0],
-          extractImages: true
-        });
-        
-        expect(post).not.toBeNull();
-        // 이미지가 있을 수도, 없을 수도 있으므로 속성만 확인
-        if (post.images) {
-          expect(Array.isArray(post.images)).toBe(true);
-        }
-      }
-    });
+    //   expect(post).not.toBeNull();
+    //   expect(post).toHaveProperty('images');
+    // });
 
     test('존재하지 않는 게시글 번호 요청 시 null 반환', async () => {
       const post = await dcCrawler.getPost({

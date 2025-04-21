@@ -191,21 +191,41 @@ const replaceImagesWithPlaceholder = (element, placeholder = '[이미지]\n') =>
     processImages(element, { mode: 'replace', placeholder });
 };
 
+
+
 /**
- * 게시판 페이지를 크롤링하여 게시글 번호 목록을 반환합니다.
+ * 게시글 정보 객체 타입 정의
+ * @typedef {Object} PostInfo
+ * @property {string} id - 게시글 번호
+ * @property {string} type - 게시글 유형 ('notice', 'picture', 'text', 'recommended', 'unknown')
+ * @property {string} subject - 말머리
+ * @property {string} title - 게시글 제목
+ * @property {string} link - 게시글 URL
+ * @property {Object} author - 작성자 정보
+ * @property {string} author.nickname - 작성자 닉네임
+ * @property {string} author.userId - 작성자 ID
+ * @property {string} author.ip - 작성자 IP
+ * @property {string} date - 작성 날짜
+ * @property {number} count - 조회수
+ * @property {number} recommend - 추천수
+ * @property {number} replyCount - 댓글 수
+ */
+
+/**
+ * 게시판 페이지를 크롤링하여 게시글 정보 목록을 반환합니다.
  * @param {number} page - 페이지 번호
  * @param {string} galleryId - 갤러리 ID
  * @param {object} options - 크롤링 옵션
  * @param {string} options.boardType - 게시판 유형 ('all', 'recommend', 'notice')
- * @param {string|null} options.num - 게시글 번호 필터
+ * @param {string|null} options.id - 게시글 번호 필터
  * @param {string|null} options.subject - 말머리 필터
  * @param {string|null} options.nickname - 닉네임 필터
  * @param {string|null} options.ip - IP 필터
- * @returns {Promise<string[]>} - 수집된 게시글 번호 배열
+ * @returns {Promise<Array<PostInfo>>}
  */
 async function scrapeBoardPage(page, galleryId, options = {
     boardType: 'all',
-    num: null,
+    id: null,
     subject: null,
     nickname: null,
     ip: null,
@@ -215,22 +235,85 @@ async function scrapeBoardPage(page, galleryId, options = {
         return [];
     }
     
-    let postNumbers = [];
+    let posts = [];
     const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}&list_num=100&search_head=&page=${page}&exception_mode=${options.boardType}`;
     try {
         const data = await fetchWithRetry(url);
         const $ = cheerio.load(data);
 
+        const postType = [
+            { dataType: "icon_notice", type: "notice" },
+            { dataType: "icon_pic", type: "picture" },
+            { dataType: "icon_txt", type: "text" },
+            {dataType: "icon_survey", type: "survey" }
+        ]
+
         $('.ub-content').each((_, element) => {
-            const num = $(element).find(".gall_num").text();
-            const subject = $(element).find(".gall_subject").text();
-            const link = $(element).find('.gall_tit a').attr('href');
-            const nickname = $(element).find(".gall_writer").attr("data-nick")
-            const ip = $(element).find(".gall_writer").attr("data-ip")
+
+            const $element = $(element);
+            const postTypeElement = $element.attr('data-type') || ''; // data-type 속성으로 타입 확인
+            const iconElement = $element.find('.icon_img').attr('class') || ''; // 아이콘 클래스로 타입 보완
+
+            // 게시글 타입 결정
+            const type = postType.find(type => iconElement.includes(type.dataType))?.type || 'unknown';
+            
+            const id = $element.find(".gall_num").text().trim();
+            const subject = $element.find(".gall_subject").text().trim();
+            
+            // 제목과 링크 추출 - 다양한 형식 고려
+            const titleElement = $element.find('.gall_tit a').first();
+            const title = titleElement.text().trim().replace(/\s+/g, ' '); // 공백 정규화
+            const link = titleElement.attr('href') || '';
+            const fullLink = link.startsWith('javascript') ? '' : 
+                            (link.startsWith('http') ? link : `https://gall.dcinside.com${link}`);
+        
+
+            // 작성자 정보 추출 - 다양한 형태 처리
+            const writerElement = $element.find(".gall_writer");
+            const nickname = writerElement.attr("data-nick") || 
+                                writerElement.find("b").text().trim() || 
+                                writerElement.find(".nickname em").text().trim() || 
+                                '익명';
+                                
+            const userId = writerElement.attr("data-uid") || '';
+            const ip = writerElement.attr("data-ip") || '';
+            
+            // 날짜 처리 - title 속성이 없는 경우 text 사용
+            const dateElement = $element.find(".gall_date");
+            const date = dateElement.attr("title") || dateElement.text().trim();
+            
+            // 조회수와 추천수 - "-" 값 처리
+            const countText = $element.find(".gall_count").text().trim();
+            const count = countText === "-" ? 0 : parseInt(countText, 10) || 0;
+            
+            const recommendText = $element.find(".gall_recommend").text().trim();
+            const recommend = recommendText === "-" ? 0 : parseInt(recommendText, 10) || 0;
+            
+            // 댓글 수 추출 (누락되었던 부분)
+            const replyElement = $element.find(".reply_num");
+            const replyCountText = replyElement.length > 0 ? replyElement.text().replace(/[\[\]]/g, '') : "0";
+            const replyCount = parseInt(replyCountText, 10) || 0;
+
+            const postInfo = {
+                id,
+                type,
+                subject,
+                title,
+                link: fullLink,
+                author: {
+                    nickname,
+                    userId,
+                    ip
+                },
+                date,
+                count,
+                recommend,
+                replyCount
+            };
 
             // 필터 조건에 맞지 않는 게시물 제외
             const shouldSkip = (
-                (options.num && options.num !== num) ||
+                (options.id && options.id !== id) ||
                 (options.subject && options.subject !== subject) ||
                 (options.nickname && options.nickname !== nickname) ||
                 (options.ip && options.ip !== ip)
@@ -238,18 +321,13 @@ async function scrapeBoardPage(page, galleryId, options = {
             
             if (shouldSkip) return;
 
-            if (link) {
-                const match = link.match(/no=(\d+)/);
-                if (match) {
-                    postNumbers.push(match[1]);
-                }
-            }
+            posts.push(postInfo); // 게시글 번호 수집
         });
     } catch (error) {
         console.error(`게시판 페이지 ${page} 크롤링 중 에러 발생: ${error.message}`);
     }
 
-    return [...new Set(postNumbers)]; // 중복 제거 후 반환
+    return [...new Set(posts)]; // 중복 제거 후 반환
 }
 
 /**

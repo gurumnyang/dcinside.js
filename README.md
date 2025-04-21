@@ -43,7 +43,33 @@ async function example() {
     boardType: 'all', // 'all', 'recommend', 'notice' 중 하나
   });
   
-  console.log('수집된 게시글 번호:', postList);
+  console.log('수집된 게시글 정보:', postList);
+  // 각 게시글의 id, 제목, 작성자, 조회수 등의 정보가 포함되어 있음
+}
+
+example();
+```
+
+### 갤러리 게시판 페이지에서 게시글 데이터 불러오기(raw API)
+
+```javascript
+const dcCrawler = require('@gurumnyang/dcinside.js');
+
+async function example() {
+  const postInfoList = await dcCrawler.raw.scrapeBoardPage(
+    1,
+    'programming',
+    {
+      boardType: 'all', // 'all', 'recommend', 'notice' 중 하나
+      id: null,        // 특정 번호만 필터링하려면 지정
+      subject: null,    // 특정 말머리만 필터링하려면 지정
+      nickname: null,   // 특정 닉네임만 필터링하려면 지정
+      ip: null          // 특정 IP만 필터링하려면 지정
+    }
+  );
+  
+  console.log('수집된 게시글 정보:', postInfoList);
+  // 수집된 각 게시글의 제목, 작성자, 조회수 등 모든 정보 확인 가능
 }
 
 example();
@@ -71,28 +97,6 @@ async function example() {
 example();
 ```
 
-### 이미지 URL 추출하기
-
-```javascript
-const dcCrawler = require('@gurumnyang/dcinside.js');
-
-async function example() {
-  const post = await dcCrawler.getPost({
-    galleryId: 'programming',
-    postNo: '1234567',
-    extractImages: true,        // 이미지 URL 추출 활성화
-    includeImageSource: false   // 본문에 이미지 URL 표시 비활성화
-  });
-  
-  if (post && post.images) {
-    console.log('이미지 URL 목록:', post.images);
-    console.log(`총 ${post.images.length}개 이미지 추출됨`);
-  }
-}
-
-example();
-```
-
 ### 여러 게시글 내용 한 번에 가져오기
 
 ```javascript
@@ -103,7 +107,6 @@ async function example() {
     galleryId: 'programming',
     postNumbers: ['1234567', '1234568', '1234569'],
     delayMs: 100,
-    extractImages: true,  // 모든 게시글에서 이미지 URL 추출
     onProgress: (current, total) => {
       console.log(`진행 상황: ${current}/${total}`);
     }
@@ -122,12 +125,15 @@ const dcCrawler = require('@gurumnyang/dcinside.js');
 const cliProgress = require('cli-progress');
 
 async function example() {
-  // 우선 게시글 번호 목록을 가져옴
-  const postList = await dcCrawler.getPostList({
+  // 우선 게시글 정보 목록을 가져옴
+  const postInfoList = await dcCrawler.getPostList({
     page: 1,
     galleryId: 'programming',
     boardType: 'all'
   });
+  
+  // 게시글 번호만 추출
+  const postNumbers = postInfoList.map(post => post.id);
   
   // 진행 상황 표시용 프로그레스 바
   const progressBar = new cliProgress.SingleBar({
@@ -137,7 +143,7 @@ async function example() {
   // 수집한 게시글 번호로 게시글 내용 가져오기
   const posts = await dcCrawler.getPosts({
     galleryId: 'programming',
-    postNumbers: postList,
+    postNumbers: postNumbers,
     delayMs: 100,
     onProgress: (current, total) => {
       if (current === 1) progressBar.start(total, 0);
@@ -196,6 +202,27 @@ console.log(getRandomUserAgent()); // 무작위 User-Agent 문자열 반환
 }
 ```
 
+### 게시글 정보 객체 (PostInfo)
+
+```javascript
+{
+  id: "1234567",               // 게시글 번호
+  type: "picture",              // 게시글 유형 ('notice', 'picture', 'text', 'recommended', 'unknown')
+  subject: "일반",              // 말머리
+  title: "게시글 제목입니다",    // 게시글 제목
+  link: "https://gall.dcinside.com/mgallery/board/view/?id=programming&no=1234567", // 게시글 링크
+  author: {
+    nickname: "작성자닉네임",    // 작성자 닉네임
+    userId: "writer_id",        // 작성자 ID (있는 경우만)
+    ip: "1.2.3.*"              // 작성자 IP (표시된 경우만)
+  },
+  date: "2025.04.21 12:34:56",  // 작성 날짜
+  count: 123,                   // 조회수
+  recommend: 10,                // 추천수
+  replyCount: 5                 // 댓글 수
+}
+```
+
 ## 에러 처리와 재시도
 
 라이브러리는 요청 실패 시 자동으로 재시도합니다. 기본 설정은 다음과 같습니다:
@@ -211,14 +238,86 @@ const options = {
 };
 ```
 
+## API 레퍼런스
+
+### 핵심 함수
+
+#### `getPostList(options)`
+
+갤러리 페이지에서 게시글 목록을 수집합니다.
+
+**매개변수:**
+- `options` (객체)
+  - `page` (숫자): 페이지 번호
+  - `galleryId` (문자열): 갤러리 ID
+  - `boardType` (문자열, 선택): 게시판 유형 ('all', 'recommend', 'notice' 중 하나, 기본값: 'all')
+  - `delayMs` (숫자, 선택): 요청 간 지연 시간(ms)
+
+**반환값:**
+- `Promise<PostInfo[]>`: 게시글 정보 객체의 배열
+
+#### `getPost(options)`
+
+게시글 번호로 게시글 내용을 가져옵니다.
+
+**매개변수:**
+- `options` (객체)
+  - `galleryId` (문자열): 갤러리 ID
+  - `postNo` (문자열 또는 숫자): 게시글 번호
+  - `extractImages` (불리언, 선택): 이미지 URL 추출 여부 (기본값: false) - 미지원
+  - `includeImageSource` (불리언, 선택): 본문에 이미지 URL 포함 여부 (기본값: false) -미지원원
+
+**반환값:**
+- `Promise<Post | null>`: 게시글 객체 또는 실패 시 null
+
+#### `getPosts(options)`
+
+여러 게시글 번호로 게시글 내용을 가져옵니다.
+
+**매개변수:**
+- `options` (객체)
+  - `galleryId` (문자열): 갤러리 ID
+  - `postNumbers` (문자열 또는 숫자의 배열): 게시글 번호 배열
+  - `delayMs` (숫자, 선택): 요청 간 지연 시간(ms) (기본값: 100)
+  - `extractImages` (불리언, 선택): 이미지 URL 추출 여부 - 미지원@todo
+  - `includeImageSource` (불리언, 선택): 본문에 이미지 URL 포함 여부 - 미지원@todo
+  - `onProgress` (함수, 선택): 진행 상황 콜백 함수 (current, total)
+  - `retryAttempts` (숫자, 선택): 최대 재시도 횟수
+  - `retryDelay` (숫자, 선택): 재시도 간 지연 시간(ms)
+
+**반환값:**
+- `Promise<Post[]>`: 수집된 게시글 객체 배열
+
+### 유틸리티 함수
+
+#### `delay(ms)`
+
+지정된 시간(밀리초) 동안 실행을 지연시킵니다.
+
+**매개변수:**
+- `ms` (숫자): 지연할 시간(밀리초)
+
+**반환값:**
+- `Promise<void>`
+
+#### `getRandomUserAgent()`
+
+무작위 User-Agent 문자열을 반환합니다.
+
+**매개변수:**
+- 없음
+
+**반환값:**
+- `string`: 무작위 User-Agent 문자열
+
 ## TODO
 
 - [x] 게시판 페이지 크롤링
 - [x] 게시글 본문 가져오기
 - [x] 댓글 가져오기
-- [x] 게시글 이미지 URL 추출
 - [x] 모든 댓글 페이지 수집
 - [x] 재시도 메커니즘 추가
+- [ ] 게시글 이미지 URL 추출
 - [ ] 로그인/로그아웃
 - [ ] 게시글 작성/수정/삭제
 - [ ] 댓글 작성
