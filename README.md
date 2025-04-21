@@ -97,28 +97,6 @@ async function example() {
 example();
 ```
 
-### 이미지 URL 추출하기
-
-```javascript
-const dcCrawler = require('@gurumnyang/dcinside.js');
-
-async function example() {
-  const post = await dcCrawler.getPost({
-    galleryId: 'programming',
-    postNo: '1234567',
-    extractImages: true,        // 이미지 URL 추출 활성화
-    includeImageSource: false   // 본문에 이미지 URL 표시 비활성화
-  });
-  
-  if (post && post.images) {
-    console.log('이미지 URL 목록:', post.images);
-    console.log(`총 ${post.images.length}개 이미지 추출됨`);
-  }
-}
-
-example();
-```
-
 ### 여러 게시글 내용 한 번에 가져오기
 
 ```javascript
@@ -129,7 +107,6 @@ async function example() {
     galleryId: 'programming',
     postNumbers: ['1234567', '1234568', '1234569'],
     delayMs: 100,
-    extractImages: true,  // 모든 게시글에서 이미지 URL 추출
     onProgress: (current, total) => {
       console.log(`진행 상황: ${current}/${total}`);
     }
@@ -287,8 +264,8 @@ const options = {
 - `options` (객체)
   - `galleryId` (문자열): 갤러리 ID
   - `postNo` (문자열 또는 숫자): 게시글 번호
-  - `extractImages` (불리언, 선택): 이미지 URL 추출 여부 (기본값: false)
-  - `includeImageSource` (불리언, 선택): 본문에 이미지 URL 포함 여부 (기본값: false)
+  - `extractImages` (불리언, 선택): 이미지 URL 추출 여부 (기본값: false) - 미지원
+  - `includeImageSource` (불리언, 선택): 본문에 이미지 URL 포함 여부 (기본값: false) -미지원원
 
 **반환값:**
 - `Promise<Post | null>`: 게시글 객체 또는 실패 시 null
@@ -302,8 +279,8 @@ const options = {
   - `galleryId` (문자열): 갤러리 ID
   - `postNumbers` (문자열 또는 숫자의 배열): 게시글 번호 배열
   - `delayMs` (숫자, 선택): 요청 간 지연 시간(ms) (기본값: 100)
-  - `extractImages` (불리언, 선택): 이미지 URL 추출 여부
-  - `includeImageSource` (불리언, 선택): 본문에 이미지 URL 포함 여부
+  - `extractImages` (불리언, 선택): 이미지 URL 추출 여부 - 미지원@todo
+  - `includeImageSource` (불리언, 선택): 본문에 이미지 URL 포함 여부 - 미지원@todo
   - `onProgress` (함수, 선택): 진행 상황 콜백 함수 (current, total)
   - `retryAttempts` (숫자, 선택): 최대 재시도 횟수
   - `retryDelay` (숫자, 선택): 재시도 간 지연 시간(ms)
@@ -338,9 +315,9 @@ const options = {
 - [x] 게시판 페이지 크롤링
 - [x] 게시글 본문 가져오기
 - [x] 댓글 가져오기
-- [x] 게시글 이미지 URL 추출
 - [x] 모든 댓글 페이지 수집
 - [x] 재시도 메커니즘 추가
+- [ ] 게시글 이미지 URL 추출
 - [ ] 로그인/로그아웃
 - [ ] 게시글 작성/수정/삭제
 - [ ] 댓글 작성
