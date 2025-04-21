@@ -3,6 +3,16 @@ const dcCrawler = require('../index');
 
 jest.setTimeout(30000); // 네트워크 테스트는 시간 여유를 둠
 
+beforeAll(() => {
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterAll(() => {
+  console.warn.mockRestore();
+  console.error.mockRestore();
+});
+
 describe('@gurumnyang/dcinside.js 라이브러리 주요 API 테스트', () => {
   // 테스트에 사용할 갤러리 ID
   const testGalleryId = 'chatgpt';
@@ -79,8 +89,8 @@ describe('@gurumnyang/dcinside.js 라이브러리 주요 API 테스트', () => {
       expect(post).toHaveProperty('content');
       expect(post).toHaveProperty('comments');
       expect(post.comments).toHaveProperty('totalCount');
-      expect(post.comments).toHaveProperty('comments');
-      expect(Array.isArray(post.comments.comments)).toBe(true);
+      expect(post.comments).toHaveProperty('items');
+      expect(Array.isArray(post.comments.items)).toBe(true);
     });
 
     // @todo
