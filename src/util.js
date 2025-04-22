@@ -1,5 +1,5 @@
 // util.js
-const inquirer = require('inquirer');
+const inquirer = require('inquirer').default;
 
 /**
  * 사용자에게 질문을 하고 입력값을 반환합니다.
