@@ -93,17 +93,31 @@ describe('@gurumnyang/dcinside.js 라이브러리 주요 API 테스트', () => {
       expect(Array.isArray(post.comments.items)).toBe(true);
     });
 
-    // @todo
-    // test('이미지 URL 추출 옵션 테스트', async () => {
-    //   const post = await dcCrawler.getPost({
-    //     galleryId: testGalleryId,
-    //     postNo: testImagePostNo,
-    //     extractImages: true
-    //   });
+    test('이미지 URL 추출 옵션 테스트', async () => {
+      const post = await dcCrawler.getPost({
+        galleryId: testGalleryId,
+        postNo: testImagePostNo,
+        extractImages: true
+      });
       
-    //   expect(post).not.toBeNull();
-    //   expect(post).toHaveProperty('images');
-    // });
+      expect(post).not.toBeNull();
+      expect(post).toHaveProperty('images');
+      expect(Array.isArray(post.images)).toBe(true);
+    });
+    
+    test('이미지 소스 포함 옵션 테스트', async () => {
+      const post = await dcCrawler.getPost({
+        galleryId: testGalleryId,
+        postNo: testImagePostNo,
+        extractImages: true,
+        includeImageSource: true
+      });
+      
+      expect(post).not.toBeNull();
+      expect(post).toHaveProperty('content');
+      // 이미지 URL 포함 형식 테스트: [image(0):"URL"]
+      expect(post.content).toMatch(/\[image\(\d+\)\:"https?:\/\/.*?"\]/);
+    });
 
     test('존재하지 않는 게시글 번호 요청 시 null 반환', async () => {
       const post = await dcCrawler.getPost({

@@ -12,7 +12,7 @@ declare module "@gurumnyang/dcinside.js" {
     recommendCount: string;
     dislikeCount: string;
     comments: Comments;
-    /** 이미지 URL 배열 (extractImages 옵션이 활성화된 경우에만 포함) // @todo: 기능 구현 후 주석 업데이트 */
+    /** 이미지 URL 배열 (extractImages 또는 'both' 모드 활성화 시 포함) */
     images?: string[];
   }
 
@@ -83,9 +83,9 @@ declare module "@gurumnyang/dcinside.js" {
   export interface GetPostOptions {
     galleryId: string;
     postNo: string | number;
-    /** 이미지 URL 추출 여부 // @todo: 기능 구현 필요 */
+    /** 이미지 URL을 추출하여 `images` 속성에 포함할지 여부 (기본값: false) */
     extractImages?: boolean;
-    /** 본문 텍스트에 이미지 URL 포함 여부 // @todo: 기능 구현 필요 */
+    /** 본문 텍스트에 이미지 URL을 포함할지 여부 (기본값: false) */
     includeImageSource?: boolean;
   }
 
@@ -96,9 +96,9 @@ declare module "@gurumnyang/dcinside.js" {
     galleryId: string;
     postNumbers: Array<string | number>;
     delayMs?: number;
-    /** 이미지 URL 추출 여부 // @todo: 기능 구현 필요 */
+    /** 이미지 URL을 추출하여 `images` 속성에 포함할지 여부 (기본값: false) */
     extractImages?: boolean;
-    /** 본문 텍스트에 이미지 URL 포함 여부 // @todo: 기능 구현 필요 */
+    /** 본문 텍스트에 이미지 URL을 포함할지 여부 (기본값: false) */
     includeImageSource?: boolean;
     onProgress?: (current: number, total: number) => void;
     /** 최대 재시도 횟수 */

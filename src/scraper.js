@@ -139,7 +139,7 @@ const extractText = ($, selector, defaultValue = '') => {
 const processImages = (element, options = {}) => {
     const {
         mode = 'replace',
-        placeholder = '[이미지]\n',
+        placeholder = 'image',
         includeSource = false,
     } = options;
     
@@ -148,9 +148,10 @@ const processImages = (element, options = {}) => {
     // 이미지 URL 추출
     if (mode === 'extract' || mode === 'both') {
         element.find('img').each((_, img) => {
+            const dataOriginal = img.attribs['data-original'] || '';
             const src = img.attribs.src || '';
             const dataSrc = img.attribs['data-src'] || '';
-            const imageUrl = dataSrc || src;
+            const imageUrl = dataOriginal || dataSrc || src;
             
             if (imageUrl) {
                 // 상대 경로인 경우 절대 경로로 변환
@@ -167,8 +168,8 @@ const processImages = (element, options = {}) => {
     if (mode === 'replace' || mode === 'both') {
         element.find('img').each((i, img) => {
             const replacement = includeSource && imageUrls[i] 
-                ? `[이미지: ${imageUrls[i]}]\n` 
-                : placeholder;
+                ? `[${placeholder}(${i}):"${imageUrls[i]}"]\n` 
+                : `[${placeholder}(${i})]\n`;
             
             img.tagName = 'span';
             img.attribs = {};
@@ -187,7 +188,7 @@ const processImages = (element, options = {}) => {
  * @param {CheerioElement} element - 이미지를 포함하는 Cheerio 요소
  * @param {string} placeholder - 이미지 대체 텍스트
  */
-const replaceImagesWithPlaceholder = (element, placeholder = '[이미지]\n') => {
+const replaceImagesWithPlaceholder = (element, placeholder = 'image') => {
     processImages(element, { mode: 'replace', placeholder });
 };
 
@@ -335,15 +336,15 @@ async function scrapeBoardPage(page, galleryId, options = {
  * @param {string} galleryId - 갤러리 ID (기본값: chatgpt)
  * @param {string|number} no - 게시글 번호 (문자열 또는 숫자 타입)
  * @param {object} options - 크롤링 옵션
- * @param {boolean} options.extractImages - 이미지 URL 추출 여부 (기본값: false) // @todo 이미지 추출 기능 구현
- * @param {boolean} options.includeImageSource - 본문에 이미지 URL 포함 여부 (기본값: false) // @todo 이미지 소스 포함 기능 구현
+ * @param {boolean} options.extractImages - 이미지 URL 추출 여부 (기본값: false)
+ * @param {boolean} options.includeImageSource - 본문에 이미지 URL 포함 여부 (기본값: false) 
  * @returns {Promise<object|null>} - 게시글 내용 객체 또는 실패 시 null
  */
 async function getPostContent(galleryId="chatgpt", no, options = {}) {
     // 옵션 기본값 설정
     const {
-        extractImages = false, // @todo: 기본값 false 유지, 기능 구현 후 true로 변경 가능성 검토
-        includeImageSource = false // @todo: 기본값 false 유지
+        extractImages = true,
+        includeImageSource = false
     } = options;
 
     // 게시글 번호 유효성 검증 및 문자열 변환
@@ -371,16 +372,14 @@ async function getPostContent(galleryId="chatgpt", no, options = {}) {
 
         const contentElement = $('.gallview_contents .write_div');
         
-        // @todo: 이미지 처리 로직 개선 필요
-        // 이미지 처리 옵션 설정
         const imageOptions = {
-            mode: extractImages ? 'both' : 'replace', // @todo: 'extract' 또는 'both' 모드 구현
-            placeholder: '[이미지]\n',
-            includeSource: includeImageSource // @todo: includeSource 옵션 처리 구현
+            mode: extractImages ? 'both' : 'replace',
+            placeholder: 'image',
+            includeSource: includeImageSource
         };
         
         // 이미지 처리하고 URL 추출
-        const imageUrls = processImages(contentElement, imageOptions); // @todo: processImages 함수 기능 완성
+        const imageUrls = processImages(contentElement, imageOptions);
         
         // 줄바꿈 처리 개선
         contentElement.find('br').replaceWith('\n');
@@ -410,7 +409,6 @@ async function getPostContent(galleryId="chatgpt", no, options = {}) {
         };
         
         // 이미지 URL이 추출되었으면 결과에 추가
-        // @todo: extractImages 옵션 활성화 시 images 필드 추가 로직 확인 및 테스트
         if (extractImages && imageUrls && imageUrls.length > 0) {
             result.images = imageUrls;
         }

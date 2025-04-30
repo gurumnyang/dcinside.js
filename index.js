@@ -53,11 +53,13 @@ async function getPostList(options) {
  * @param {Object} options - 크롤링 옵션
  * @param {string} options.galleryId - 갤러리 ID
  * @param {string} options.postNo - 게시글 번호
+ * @param {boolean} [options.extractImages] - 이미지 URL 추출 여부
+ * @param {boolean} [options.includeImageSource] - 본문에 이미지 URL 포함 여부
  * @returns {Promise<Object|null>} 게시글 내용 객체 또는 실패 시 null
  */
 async function getPost(options) {
-  const { galleryId, postNo } = options;
-  return await getPostContent(galleryId, postNo);
+  const { galleryId, postNo, ...restOptions } = options;
+  return await getPostContent(galleryId, postNo, restOptions);
 }
 
 /**
@@ -68,10 +70,12 @@ async function getPost(options) {
  * @param {string[]} options.postNumbers - 게시글 번호 배열
  * @param {number} [options.delayMs=100] - 요청 간 지연 시간(ms)
  * @param {function} [options.onProgress] - 진행 상황 콜백 함수 (current, total)
+ * @param {boolean} [options.extractImages] - 이미지 URL 추출 여부
+ * @param {boolean} [options.includeImageSource] - 본문에 이미지 URL 포함 여부
  * @returns {Promise<Object[]>} 수집된 게시글 객체 배열
  */
 async function getPosts(options) {
-  const { galleryId, postNumbers, delayMs = 100, onProgress } = options;
+  const { galleryId, postNumbers, delayMs = 100, onProgress, ...restOptions } = options;
   
   const posts = [];
   const total = postNumbers.length;
@@ -91,7 +95,7 @@ async function getPosts(options) {
         }
       }
 
-      const post = await getPostContent(galleryId, postNumbers[i]);
+      const post = await getPostContent(galleryId, postNumbers[i], restOptions);
       if (post) {
         posts.push(post);
       }

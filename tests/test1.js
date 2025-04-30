@@ -1,5 +1,5 @@
 const { getPost } = require('../index');
-const {scrapeBoardPage} = require('../src/scraper');
+const {getPostContent} = require('../src/scraper');
 
 const {delay, getRandomUserAgent} = require('../src/util');
 
@@ -15,11 +15,14 @@ const {delay, getRandomUserAgent} = require('../src/util');
     // console.log(postNumbers[0])
     
 
-    const postContent = await getPost({
-        galleryId: galleryId,
-        postNo: '22690'
-    });
-    console.log(postContent.comments.items);
+    const postContent = await getPostContent(
+        galleryId,
+        '28204',
+        {
+            extractImages: true
+        }
+    );
+    console.log(postContent);
 
     // console.log('수집된 게시글 번호:', postNumbers);
     
