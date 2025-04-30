@@ -17,9 +17,9 @@ const {delay, getRandomUserAgent} = require('../src/util');
 
     const postContent = await getPost({
         galleryId: galleryId,
-        postNo: '22499'
+        postNo: '22690'
     });
-    console.log(postContent);
+    console.log(postContent.comments.items);
 
     // console.log('수집된 게시글 번호:', postNumbers);
     
