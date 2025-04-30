@@ -78,6 +78,19 @@ async function getPosts(options) {
   
   for (let i = 0; i < total; i++) {
     try {
+
+      if(typeof postNumbers[i] !== 'string' && typeof postNumbers[i] !== 'number') {
+        console.warn(`options.postNumbers는 숫자 또는 문자열 배열이어야 합니다.`);
+        if(typeof postNumbers[i] === 'object' && postNumbers[i] !== null) {
+          if(typeof postNumbers[i].id === 'string' || typeof postNumbers[i].id === 'number') {
+            postNumbers[i] = postNumbers[i].id;
+          } else {
+            console.warn(`게시글 번호 ${postNumbers[i]}는 무시됩니다.`);
+            continue;
+          }
+        }
+      }
+
       const post = await getPostContent(galleryId, postNumbers[i]);
       if (post) {
         posts.push(post);

@@ -80,29 +80,14 @@ async function scrapeBoardPagesWithProgress(startPage, endPage, galleryId, typeP
     }
     
     pageBar.stop();
+
+    postNumbers = postNumbers.map(post => post.id);
     
     // 중복 제거
     postNumbers = Array.from(new Set(postNumbers));
-    const totalPosts = postNumbers.length;
     
-    // 게시글 크롤링 진행상황 표시 막대
-    const progressBar = new cliProgress.SingleBar({
-        format: '게시글 크롤링 진행 |{bar}| {percentage}% || {value}/{total} 게시글',
-        hideCursor: true
-    }, cliProgress.Presets.shades_classic);
-    
-    progressBar.start(totalPosts, 0);
-    
-    // 수집된 게시글 번호로 게시글 내용 크롤링
-    const posts = await getPosts({
-        galleryId,
-        postNumbers,
-        delayMs: 10,
-        onProgress: () => progressBar.increment()
-    });
-    
-    progressBar.stop();
-    return posts;
+    // 이미 구현된 scrapePostsWithArray 함수 재활용
+    return await scrapePostsWithArray(postNumbers, galleryId);
 }
 
 /**
