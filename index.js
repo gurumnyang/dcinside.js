@@ -11,7 +11,7 @@ const scraper = require('./src/scraper');
 /**
  * 게시글 정보 객체 타입 정의
  * @typedef {Object} PostInfo
- * @property {string} num - 게시글 번호
+ * @property {string} id - 게시글 번호
  * @property {string} type - 게시글 유형 ('notice', 'picture', 'text', 'recommended', 'unknown')
  * @property {string} subject - 말머리
  * @property {string} title - 게시글 제목
