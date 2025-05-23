@@ -471,7 +471,7 @@ async function getCommentsForPost(no, galleryId, e_s_n_o) {
                 regDate: comment.reg_date,
                 memo: comment.memo,
                 isDeleted: comment.is_delete
-            })).filter(comment => comment.name !== '댓글돌이' || comment.ip !== '');
+            })).filter(comment => comment.author.nickname !== '댓글돌이' || comment.author.ip !== '');
 
             allComments = [...allComments, ...processedComments];
             
