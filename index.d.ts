@@ -145,9 +145,9 @@ declare module "@gurumnyang/dcinside.js" {
   export function getRandomUserAgent(): string;
   
   /**
-   * @deprecated getPostList를 사용하세요
+   * @deprecated getPostList를 사용하세요. PostInfo[]를 반환합니다.
    */
-  export function getPostNumbers(options: GetPostListOptions): Promise<string[]>;
+  export function getPostNumbers(options: GetPostListOptions): Promise<PostInfo[]>;
 
   /**
    * 크롤링 관련 에러 클래스
