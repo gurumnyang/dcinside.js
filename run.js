@@ -3,7 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const cliProgress = require('cli-progress');
 const { getPostList, getPost, getPosts, delay } = require('./index');
-const { askQuestion, validateNumberInput } = require('./src/util');
+const { validateNumberInput } = require('./src/util');
+const askQuestion = require('./src/askQuestion');
 
 const OUTPUT_DIR = './output';
 

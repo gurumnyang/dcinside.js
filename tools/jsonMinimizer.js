@@ -2,7 +2,7 @@ const fs = require('fs');
 //csv로 저장하기 위한 모듈
 const path = require('path');
 
-const askQuestion = require('../src/util.js').askQuestion;
+const askQuestion = require('./src/askQuestion');
 
 const main = async () => {
     let filePath = await askQuestion('상대경로 기준 파일명을 입력하세요. (예: data.json): ');

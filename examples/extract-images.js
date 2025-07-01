@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getPostContent } = require('../src/scraper');
-const { askQuestion } = require('../src/util');
+const { askQuestion } = require('../src/askQuestion');
 
 /**
  * 이미지 URL을 파일로 저장합니다.
