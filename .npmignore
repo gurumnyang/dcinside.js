@@ -23,7 +23,6 @@
 /website/
 
 # 웹 서버 관련
-/web.js
 /views/
 
 # 기타
