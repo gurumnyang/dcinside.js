@@ -259,7 +259,12 @@ async function scrapeBoardPage(page, galleryId, options = {
             const type = postType.find(type => iconElement.includes(type.dataType))?.type || 'unknown';
             
             const id = $element.find(".gall_num").text().trim();
-            const subject = $element.find(".gall_subject").text().trim();
+            const subject = (() => {
+                const $td = $element.find('.gall_subject');
+                return $td.attr('onmouseover')
+                    ? $td.find('.subject_inner').text().trim()
+                    : $td.text().trim();
+            })();
             
             // 제목과 링크 추출 - 다양한 형식 고려
             const titleElement = $element.find('.gall_tit a').first();
