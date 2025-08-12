@@ -169,6 +169,39 @@ declare module "@gurumnyang/dcinside.js" {
    */
   export function getAutocomplete(query: string): Promise<AutocompleteResponse>;
 
+  /** 검색 결과 게시글 항목 */
+  export interface SearchPost {
+    title: string;
+    content?: string;
+    galleryName?: string;
+    galleryId?: string;
+    date?: string;
+    link: string;
+  }
+
+  /** 검색 결과 갤러리 항목 */
+  export interface SearchGalleryItem {
+    name?: string;
+    id?: string;
+    type?: 'board' | 'mgallery' | 'mini';
+    link: string;
+    rank?: number;
+    new_post?: number;
+    total_post?: number;
+  }
+
+  /** 검색 결과 객체 */
+  export interface SearchResult {
+    query?: string;
+    galleries: SearchGalleryItem[];
+    posts: SearchPost[];
+  }
+
+  /**
+   * 통합검색을 수행하고 파싱된 결과를 반환합니다.
+   */
+  export function search(query: string): Promise<SearchResult>;
+
   /**
    * 지정된 시간(밀리초) 동안 실행을 지연시킵니다.
    */

@@ -8,6 +8,7 @@ const { scrapeBoardPage, getPostContent } = require('./src/scraper');
 const { delay, getRandomUserAgent } = require('./src/util');
 const scraper = require('./src/scraper');
 const autocomplete = require('./src/autocomplete');
+const searchModule = require('./src/search');
 
 /**
  * 게시글 정보 객체 타입 정의
@@ -125,12 +126,22 @@ async function getAutocomplete(query) {
   return await autocomplete.getAutocomplete(query);
 }
 
+/**
+ * 통합검색을 수행하고 결과를 반환합니다.
+ * @param {string} query - 검색어
+ * @returns {Promise<object>} 검색 결과 객체 { query?, gallery?, posts[] }
+ */
+async function search(query) {
+  return await searchModule.search(query);
+}
+
 module.exports = {
   // 노출할 주요 함수들
   getPostList,
   getPost,
   getPosts,
   getAutocomplete,
+  search,
   
   // 이전 함수명도 호환성을 위해 유지
   getPostNumbers: getPostList,
@@ -140,5 +151,5 @@ module.exports = {
   getRandomUserAgent,
   
   // 원본 함수들도 노출 (고급 사용자를 위해)
-  raw: { ...scraper, ...autocomplete }
+  raw: { ...scraper, ...autocomplete, ...searchModule }
 };

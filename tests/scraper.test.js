@@ -14,8 +14,8 @@ afterAll(() => {
 
 describe('scraper 주요 기능', () => {
 
-    const testPostNo = '22690'; // 실제 게시글 번호로 대체 필요
-    const testCommentPostNo = '22690'; // 댓글이 있는 게시글 번호
+    const testPostNo = '16'; // 게시글 삭제시 다른것으로 대체
+    const testCommentPostNo = '16'; // 댓글이 있는 게시글 번호
 
     test('scrapeBoardPage 게시글 번호 배열 반환', async () => {
         const posts = await scrapeBoardPage(1, 'chatgpt', { boardType: 'all' });

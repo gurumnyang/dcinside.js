@@ -22,6 +22,7 @@ yarn add @gurumnyang/dcinside.js
 - 특정 페이지의 모든 게시글 내용 수집
 - 게시글 내의 이미지 URL 추출
 - 모든 댓글 페이지 자동 수집
+- 통합검색 결과 수집(검색어 기반)
 - TypeScript 타입 정의 지원
 
 ## 필요 사항
@@ -45,6 +46,21 @@ async function example() {
   
   console.log('수집된 게시글 정보:', postList);
   // 각 게시글의 id, 제목, 작성자, 조회수 등의 정보가 포함되어 있음
+}
+
+example();
+```
+
+### 통합검색 결과 수집(새 기능)
+
+```javascript
+const dcCrawler = require('@gurumnyang/dcinside.js');
+
+async function example() {
+  const result = await dcCrawler.search('검색쿼리');
+  // result = { query?: string, galleries: SearchGalleryItem[], posts: SearchPost[] }
+  console.log(result.galleries.slice(0, 3));
+  console.log(result.posts.slice(0, 3));
 }
 
 example();
@@ -223,6 +239,35 @@ console.log(getRandomUserAgent()); // 무작위 User-Agent 문자열 반환
   count: 123,                   // 조회수
   recommend: 10,                // 추천수
   replyCount: 5                 // 댓글 수
+}
+```
+
+### 통합검색 결과 객체 (SearchResult)
+
+```javascript
+{
+  query: '지피티',
+  galleries: [
+    {
+      name: '챗지피티(ChatGPT)ⓜ',
+      id: 'chatgpt',
+      type: 'mgallery',
+      link: 'https://gall.dcinside.com/mgallery/board/lists/?id=chatgpt',
+      rank: 153,
+      new_post: 615,
+      total_post: 52041
+    }
+  ],
+  posts: [
+    {
+      title: '지피티 수준이 어마어마하긴 함 3(feat.갤럼)',
+      content: '비슷한 결과물 나오길 기대하면서 갤럼 그림 빌려서 같은 요청 해봤음 ????? 왜 나만??? - dc official App',
+      galleryName: '챗지피티(ChatGPT) 갤러리',
+      galleryId: 'chatgpt',
+      date: '2025.08.12 21:57',
+      link: 'https://gall.dcinside.com/mgallery/board/view/?id=chatgpt&no=52384'
+    }
+  ]
 }
 ```
 
