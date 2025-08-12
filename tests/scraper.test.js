@@ -1,4 +1,4 @@
-const { scrapeBoardPage, getPostContent } = require('../src/scraper');
+﻿const { scrapeBoardPage, getPostContent } = require('../src/scraper');
 
 jest.setTimeout(20000); // 네트워크 테스트는 시간 여유를 둠
 
@@ -78,3 +78,4 @@ describe('scraper 주요 기능', () => {
         expect(post).toBeNull();
     });
 });
+
