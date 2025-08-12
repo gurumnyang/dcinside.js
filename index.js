@@ -7,6 +7,7 @@
 const { scrapeBoardPage, getPostContent } = require('./src/scraper');
 const { delay, getRandomUserAgent } = require('./src/util');
 const scraper = require('./src/scraper');
+const autocomplete = require('./src/autocomplete');
 
 /**
  * 게시글 정보 객체 타입 정의
@@ -115,11 +116,21 @@ async function getPosts(options) {
   return posts;
 }
 
+/**
+ * 검색어를 입력하면 DCInside 자동완성 결과(JSON)를 반환합니다.
+ * @param {string} query - 검색어
+ * @returns {Promise<object>} 자동완성 결과 객체
+ */
+async function getAutocomplete(query) {
+  return await autocomplete.getAutocomplete(query);
+}
+
 module.exports = {
   // 노출할 주요 함수들
   getPostList,
   getPost,
   getPosts,
+  getAutocomplete,
   
   // 이전 함수명도 호환성을 위해 유지
   getPostNumbers: getPostList,
@@ -129,5 +140,5 @@ module.exports = {
   getRandomUserAgent,
   
   // 원본 함수들도 노출 (고급 사용자를 위해)
-  raw: scraper
+  raw: { ...scraper, ...autocomplete }
 };

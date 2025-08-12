@@ -313,6 +313,65 @@ const options = {
 **반환값:**
 - `string`: 무작위 User-Agent 문자열
 
+## 자동완성(Autocomplete)
+
+dcinside 검색 자동완성 API를 지원합니다.
+
+### 빠른 시작
+
+```javascript
+const dc = require('@gurumnyang/dcinside.js');
+
+async function main() {
+  const result = await dc.getAutocomplete('chatgpt');
+  console.log(result);
+  // 예: result.gallery.total, result.gallery["0"].ko_name 등
+}
+
+main();
+```
+
+### Raw API
+
+```javascript
+const dc = require('@gurumnyang/dcinside.js');
+
+async function main() {
+  const result = await dc.raw.getAutocomplete('chatgpt');
+  console.log(result);
+}
+
+main();
+```
+
+### 응답 구조(요약)
+
+```json
+{
+  "gallery": {
+    "0": {
+      "name": "chatgpt",
+      "ko_name": "챗지피티(ChatGPT)",
+      "gall_type": "M",
+      "link": "https://gall.dcinside.com/mgallery/board/lists/?id=chatgpt"
+      // new_post, total_post 등은 상황에 따라 존재
+    },
+    "total": 1
+  },
+  "prgallery": { "total": "0" },
+  "recommend": { "0": { /* gallery와 유사 */ }, "total": "11" },
+  "wiki": { "0": { "title": "ChatGPT", "gall_type": "WIKI" } },
+  "time": { "time": "1754991744332" }
+}
+```
+
+
+### TypeScript 타입
+
+- `AutocompleteResponse`, `AutocompleteGalleryItem`, `AutocompleteWikiItem`
+- `getAutocomplete(query: string): Promise<AutocompleteResponse>`
+- `raw.getAutocomplete(query: string): Promise<AutocompleteResponse>`
+
 ## TODO
 
 - [x] 게시판 페이지 크롤링
@@ -321,6 +380,7 @@ const options = {
 - [x] 모든 댓글 페이지 수집
 - [x] 재시도 메커니즘 추가
 - [x] 게시글 이미지 URL 추출
+- [x] 검색 기능 지원
 - [ ] 이미지 다운로드 기능
 - [ ] 로그인/로그아웃
 - [ ] 게시글 작성/수정/삭제

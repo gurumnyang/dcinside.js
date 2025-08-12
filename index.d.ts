@@ -119,6 +119,36 @@ declare module "@gurumnyang/dcinside.js" {
     includeSource?: boolean;
   }
 
+  /** 자동완성 결과 갤러리 항목 */
+  export interface AutocompleteGalleryItem {
+    name: string;
+    ko_name: string;
+    gall_type: string;
+    new_post?: string;
+    total_post?: string;
+    total_score?: string;
+    member_count?: string;
+    rank?: string;
+    pr_profile?: string;
+    state?: string;
+    link?: string;
+  }
+
+  /** 자동완성 위키 항목 */
+  export interface AutocompleteWikiItem {
+    title: string;
+    gall_type: string;
+  }
+
+  /** 자동완성 응답 객체 */
+  export interface AutocompleteResponse {
+    gallery?: Record<string, AutocompleteGalleryItem> & { total?: number | string };
+    prgallery?: Record<string, AutocompleteGalleryItem> & { total?: number | string };
+    recommend?: Record<string, AutocompleteGalleryItem> & { total?: number | string };
+    wiki?: Record<string, AutocompleteWikiItem>;
+    time?: { time: string };
+  }
+
   /**
    * 페이지 범위로 게시글 목록을 수집합니다.
    */
@@ -133,6 +163,11 @@ declare module "@gurumnyang/dcinside.js" {
    * 여러 게시글 번호로 게시글 내용을 가져옵니다.
    */
   export function getPosts(options: GetPostsOptions): Promise<Post[]>;
+
+  /**
+   * 검색어 자동완성 결과를 반환합니다.
+   */
+  export function getAutocomplete(query: string): Promise<AutocompleteResponse>;
 
   /**
    * 지정된 시간(밀리초) 동안 실행을 지연시킵니다.
@@ -220,5 +255,9 @@ declare module "@gurumnyang/dcinside.js" {
       element: any,
       options?: ImageProcessOptions
     ) => string[] | null;
+
+    getAutocomplete: (
+      query: string
+    ) => Promise<AutocompleteResponse>;
   };
 }
