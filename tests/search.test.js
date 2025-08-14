@@ -67,6 +67,7 @@ describe('search parsing', () => {
       name: expect.stringContaining('챗지피티'),
       id: 'chatgpt',
       type: 'mgallery',
+      galleryType: 'mgallery',
     });
 
     // posts
@@ -77,6 +78,7 @@ describe('search parsing', () => {
       content: '첫 번째 요약 내용',
       galleryName: expect.stringContaining('챗지피티'),
       galleryId: 'chatgpt',
+      galleryType: 'mgallery',
     });
     expect(res.posts[0].link).toContain('/board/view/?id=chatgpt');
     expect(res.posts[0].date).toContain('2025');
@@ -89,8 +91,18 @@ describe('search parsing', () => {
     expect(res.galleries.length).toBeGreaterThan(0);
   });
 
+  test('search() supports sort option (latest)', async () => {
+    let capturedUrl = '';
+    axios.__setGetImpl((url) => {
+      capturedUrl = url;
+      return Promise.resolve({ data: SAMPLE_HTML });
+    });
+    const res = await search('검색쿼리', { sort: 'latest' });
+    expect(res.posts.length).toBeGreaterThan(0);
+    expect(capturedUrl).toContain('/combine/sort/latest/q/');
+  });
+
   test('search() throws on empty query', async () => {
     await expect(search('')).rejects.toBeInstanceOf(CrawlError);
   });
 });
-

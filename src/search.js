@@ -78,14 +78,16 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
       if (nameCand) name = nameCand;
     }
 
-    // 갤러리 id/type 파싱
-    let id, type;
+    // 갤러리 id/type 파싱 및 갤러리 구분 추가
+    let id, type, galleryType;
     try {
       const u = new URL(link, baseUrl);
       id = u.searchParams.get('id') || undefined;
       if (u.pathname.includes('/mgallery/')) type = 'mgallery';
       else if (u.pathname.includes('/mini/')) type = 'mini';
+      else if (u.pathname.includes('/person/')) type = 'person';
       else type = 'board';
+      galleryType = type === 'board' ? 'main' : type; // main | mgallery | mini | person
     } catch (_) {}
 
     // 부가 정보: 숫자(랭크/새글/전체글)
@@ -106,7 +108,7 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
       total_post = Number(m[2].replace(/,/g, ''));
     }
 
-    galleries.push({ name, id, type, link, rank, new_post, total_post });
+    galleries.push({ name, id, type, galleryType, link, rank, new_post, total_post });
     seenGalleryLinks.add(link);
   });
 
@@ -172,11 +174,15 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
         date = typeof dateMatch === 'string' ? dateMatch : dateMatch[0];
       }
 
-      // 갤러리 ID/이름
-      let galleryId, galleryName;
+      // 갤러리 ID/이름/구분
+      let galleryId, galleryName, galleryType;
       try {
         const urlObj = new URL(link, baseUrl);
         galleryId = urlObj.searchParams.get('id') || undefined;
+        if (urlObj.pathname.includes('/mgallery/')) galleryType = 'mgallery';
+        else if (urlObj.pathname.includes('/mini/')) galleryType = 'mini';
+        else if (urlObj.pathname.includes('/person/')) galleryType = 'person';
+        else galleryType = 'main';
       } catch (_) { /* noop */ }
 
       // 갤러리명: p.link_dsc_txt.dsc_sub a.sub_txt 우선
@@ -185,7 +191,7 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
       const nameFromCate = !nameFromSub ? container.find('.gall, .board, .name, .cate a, .cate, .category').first().text().trim() : '';
       galleryName = nameFromSub || nameFromCate || nameFromSuffix || undefined;
 
-      posts.push({ title, content, galleryName, galleryId, date, link });
+      posts.push({ title, content, galleryName, galleryId, galleryType, date, link });
       seenLinks.add(link);
     } catch (e) {
       // 개별 항목 실패는 무시
@@ -198,15 +204,21 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
 /**
  * 통합검색을 수행하고 파싱된 결과를 반환합니다.
  * @param {string} query 검색어(한글 가능)
+ * @param {{ sort?: 'latest' | 'accuracy' }} [options] 정렬 옵션
  * @returns {Promise<{ query?: string, gallery?: object, posts: Array<object> }>} 결과
  */
-async function search(query) {
+async function search(query, options = {}) {
   if (!query || typeof query !== 'string') {
     throw new CrawlError('유효한 검색어(query)가 필요합니다.', 'parse');
   }
 
   const k = encodeAutocompleteKey(query);
-  const url = `https://search.dcinside.com/combine/q/${k}`;
+  const sort = options && (options.sort === 'latest' || options.sort === 'accuracy')
+    ? options.sort
+    : undefined;
+
+  const sortPath = sort ? `/sort/${sort}` : '';
+  const url = `https://search.dcinside.com/combine${sortPath}/q/${k}`;
 
   const html = await fetchWithRetry(url);
   return parseSearchHtml(html, 'https://search.dcinside.com');

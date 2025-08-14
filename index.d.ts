@@ -175,6 +175,8 @@ declare module "@gurumnyang/dcinside.js" {
     content?: string;
     galleryName?: string;
     galleryId?: string;
+    /** 갤러리 구분: main(메인), mgallery(마이너), mini(미니), person(인물) */
+    galleryType?: 'main' | 'mgallery' | 'mini' | 'person';
     date?: string;
     link: string;
   }
@@ -183,7 +185,10 @@ declare module "@gurumnyang/dcinside.js" {
   export interface SearchGalleryItem {
     name?: string;
     id?: string;
-    type?: 'board' | 'mgallery' | 'mini';
+    /** 내부 타입(기존 호환): board(메인), mgallery, mini, person */
+    type?: 'board' | 'mgallery' | 'mini' | 'person';
+    /** 갤러리 구분: main(메인), mgallery(마이너), mini(미니), person(인물) */
+    galleryType?: 'main' | 'mgallery' | 'mini' | 'person';
     link: string;
     rank?: number;
     new_post?: number;
@@ -200,7 +205,12 @@ declare module "@gurumnyang/dcinside.js" {
   /**
    * 통합검색을 수행하고 파싱된 결과를 반환합니다.
    */
-  export function search(query: string): Promise<SearchResult>;
+  /**
+   * 통합검색을 수행하고 파싱된 결과를 반환합니다.
+   * @param query 검색어
+   * @param options 정렬 옵션
+   */
+  export function search(query: string, options?: { sort?: 'latest' | 'accuracy' }): Promise<SearchResult>;
 
   /**
    * 지정된 시간(밀리초) 동안 실행을 지연시킵니다.

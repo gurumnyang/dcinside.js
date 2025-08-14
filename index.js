@@ -129,10 +129,11 @@ async function getAutocomplete(query) {
 /**
  * 통합검색을 수행하고 결과를 반환합니다.
  * @param {string} query - 검색어
+ * @param {{ sort?: 'latest' | 'accuracy' }} [options] - 정렬 옵션
  * @returns {Promise<object>} 검색 결과 객체 { query?, gallery?, posts[] }
  */
-async function search(query) {
-  return await searchModule.search(query);
+async function search(query, options = {}) {
+  return await searchModule.search(query, options);
 }
 
 module.exports = {

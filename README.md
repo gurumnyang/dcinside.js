@@ -57,11 +57,48 @@ example();
 const dcCrawler = require('@gurumnyang/dcinside.js');
 
 async function example() {
+  // 기본: 사이트 기본 정렬(정확도)로 검색
   const result = await dcCrawler.search('검색쿼리');
   // result = { query?: string, galleries: SearchGalleryItem[], posts: SearchPost[] }
   console.log(result.galleries.slice(0, 3));
   console.log(result.posts.slice(0, 3));
+
+  // 정렬 지정: 최신순 또는 정확도
+  const latest = await dcCrawler.search('검색쿼리', { sort: 'latest' });
+  const accuracy = await dcCrawler.search('검색쿼리', { sort: 'accuracy' });
 }
+
+// 참고: 통합검색 반환 값에는 갤러리 구분 필드가 포함됩니다.
+// - result.galleries[i].galleryType: 'main' | 'mgallery' | 'mini' | 'person'
+// - result.posts[i].galleryType: 'main' | 'mgallery' | 'mini' | 'person'
+```
+
+#### 검색 결과 타입 상세
+
+```javascript
+// SearchGalleryItem 예시
+{
+  name: '챗지피티(ChatGPT)ⓜ',
+  id: 'chatgpt',
+  type: 'mgallery',       // 내부 호환용: 'board'|'mgallery'|'mini'|'person'
+  galleryType: 'mgallery',// 구분용: 'main'|'mgallery'|'mini'|'person'
+  link: 'https://gall.dcinside.com/mgallery/board/lists/?id=chatgpt',
+  rank: 153,
+  new_post: 12,
+  total_post: 345
+}
+
+// SearchPost 예시
+{
+  title: '첫 번째 게시글',
+  content: '요약 내용',
+  galleryName: '챗지피티(ChatGPT)ⓜ',
+  galleryId: 'chatgpt',
+  galleryType: 'mgallery', // 'main'|'mgallery'|'mini'|'person'
+  date: '2025.08.11 10:00:00',
+  link: 'https://gall.dcinside.com/mgallery/board/view/?id=chatgpt&no=1111'
+}
+
 
 example();
 ```
