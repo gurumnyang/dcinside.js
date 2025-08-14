@@ -5,12 +5,10 @@
 ## 설치 방법
 
 ```bash
+# NPM
 npm install @gurumnyang/dcinside.js
-```
 
-또는
-
-```bash
+# Yarn
 yarn add @gurumnyang/dcinside.js
 ```
 
@@ -25,14 +23,10 @@ yarn add @gurumnyang/dcinside.js
 - 통합검색 결과 수집(검색어 기반)
 - TypeScript 타입 정의 지원
 
-## 필요 사항
-
-- Node.js 16.0.0 이상
-- npm 또는 yarn 패키지 매니저
 
 ## 사용 방법
 
-### 갤러리 페이지에서 게시글 목록 수집
+### 마이너 갤러리 페이지에서 게시글 목록 수집
 
 ```javascript
 const dcCrawler = require('@gurumnyang/dcinside.js');
@@ -51,7 +45,7 @@ async function example() {
 example();
 ```
 
-### 통합검색 결과 수집(새 기능)
+### 통합검색 (새 기능)
 
 ```javascript
 const dcCrawler = require('@gurumnyang/dcinside.js');
@@ -72,7 +66,6 @@ async function example() {
 // - result.galleries[i].galleryType: 'main' | 'mgallery' | 'mini' | 'person'
 // - result.posts[i].galleryType: 'main' | 'mgallery' | 'mini' | 'person'
 ```
-
 #### 검색 결과 타입 상세
 
 ```javascript
