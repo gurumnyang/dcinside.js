@@ -204,6 +204,58 @@ async function example() {
 example();
 ```
 
+## 자동완성(Autocomplete)
+
+dcinside 검색 자동완성 API를 지원합니다.
+
+### 빠른 시작
+
+```javascript
+const dc = require('@gurumnyang/dcinside.js');
+
+async function main() {
+  const result = await dc.getAutocomplete('chatgpt');
+  console.log(result);
+  // 예: result.gallery.total, result.gallery["0"].ko_name 등
+}
+
+main();
+```
+
+### Raw API
+
+```javascript
+const dc = require('@gurumnyang/dcinside.js');
+
+async function main() {
+  const result = await dc.raw.getAutocomplete('chatgpt');
+  console.log(result);
+}
+
+main();
+```
+
+### 응답 구조(요약)
+
+```json
+{
+  "gallery": {
+    "0": {
+      "name": "chatgpt",
+      "ko_name": "챗지피티(ChatGPT)",
+      "gall_type": "M",
+      "link": "https://gall.dcinside.com/mgallery/board/lists/?id=chatgpt"
+      // new_post, total_post 등은 상황에 따라 존재
+    },
+    "total": 1
+  },
+  "prgallery": { "total": "0" },
+  "recommend": { "0": { /* gallery와 유사 */ }, "total": "11" },
+  "wiki": { "0": { "title": "ChatGPT", "gall_type": "WIKI" } },
+  "time": { "time": "1754991744332" }
+}
+```
+
 ### User-Agent 관련 유틸리티 함수
 
 ```javascript
@@ -334,6 +386,8 @@ const options = {
 **반환값:**
 - `Promise<PostInfo[]>`: 게시글 정보 객체의 배열
 
+---
+
 #### `getPost(options)`
 
 게시글 번호로 게시글 내용을 가져옵니다.
@@ -347,6 +401,8 @@ const options = {
 
 **반환값:**
 - `Promise<Post | null>`: 게시글 객체 또는 실패 시 null
+
+---
 
 #### `getPosts(options)`
 
@@ -366,6 +422,34 @@ const options = {
 **반환값:**
 - `Promise<Post[]>`: 수집된 게시글 객체 배열
 
+---
+
+#### `getAutocomplete(query)`
+
+검색어를 입력하면 DCInside 자동완성 결과(JSON)를 반환한다.
+
+**매개변수:**
+- `query` (문자열): 검색어
+
+**반환값:**
+- `Promise<object>`: 자동완성 결과 객체
+
+---
+
+#### `search(query, options)`
+
+통합검색을 수행하고 결과를 반환한다.
+
+**매개변수:**
+- `query` (문자열): 검색어
+- `options` (객체, 선택)
+  - `sort` ('latest' | 'accuracy', 선택): 정렬 기준
+
+**반환값:**
+- `Promise<object>`: 검색 결과 객체 `{ query?, gallery?, posts[] }`
+
+---
+
 ### 유틸리티 함수
 
 #### `delay(ms)`
@@ -378,6 +462,8 @@ const options = {
 **반환값:**
 - `Promise<void>`
 
+---
+
 #### `getRandomUserAgent()`
 
 무작위 User-Agent 문자열을 반환합니다.
@@ -388,57 +474,7 @@ const options = {
 **반환값:**
 - `string`: 무작위 User-Agent 문자열
 
-## 자동완성(Autocomplete)
 
-dcinside 검색 자동완성 API를 지원합니다.
-
-### 빠른 시작
-
-```javascript
-const dc = require('@gurumnyang/dcinside.js');
-
-async function main() {
-  const result = await dc.getAutocomplete('chatgpt');
-  console.log(result);
-  // 예: result.gallery.total, result.gallery["0"].ko_name 등
-}
-
-main();
-```
-
-### Raw API
-
-```javascript
-const dc = require('@gurumnyang/dcinside.js');
-
-async function main() {
-  const result = await dc.raw.getAutocomplete('chatgpt');
-  console.log(result);
-}
-
-main();
-```
-
-### 응답 구조(요약)
-
-```json
-{
-  "gallery": {
-    "0": {
-      "name": "chatgpt",
-      "ko_name": "챗지피티(ChatGPT)",
-      "gall_type": "M",
-      "link": "https://gall.dcinside.com/mgallery/board/lists/?id=chatgpt"
-      // new_post, total_post 등은 상황에 따라 존재
-    },
-    "total": 1
-  },
-  "prgallery": { "total": "0" },
-  "recommend": { "0": { /* gallery와 유사 */ }, "total": "11" },
-  "wiki": { "0": { "title": "ChatGPT", "gall_type": "WIKI" } },
-  "time": { "time": "1754991744332" }
-}
-```
 
 
 ### TypeScript 타입
