@@ -160,6 +160,12 @@ declare module "@gurumnyang/dcinside.js" {
   export function getPost(options: GetPostOptions): Promise<Post | null>;
 
   /**
+   * PC 버전(레거시) 게시글 내용을 가져옵니다.
+   * @deprecated 모바일 버전 기본 API(getPost)를 사용하세요.
+   */
+  export function getPostLegacy(options: GetPostOptions): Promise<Post | null>;
+
+  /**
    * 여러 게시글 번호로 게시글 내용을 가져옵니다.
    */
   export function getPosts(options: GetPostsOptions): Promise<Post[]>;
@@ -270,6 +276,16 @@ declare module "@gurumnyang/dcinside.js" {
     
     getPostContent: (
       galleryId: string, 
+      no: string | number,
+      options?: {
+        extractImages?: boolean;
+        includeImageSource?: boolean;
+      }
+    ) => Promise<Post | null>;
+    
+    /** 모바일 게시글 파서(원본 접근) */
+    getMobilePostContent: (
+      galleryId: string,
       no: string | number,
       options?: {
         extractImages?: boolean;

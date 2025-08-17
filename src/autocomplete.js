@@ -1,10 +1,10 @@
 // autocomplete.js
 
-const axios = require('axios');
-const { CrawlError, withRetry } = require('./util');
+const { CrawlError } = require('./util');
 const config = require('./config');
+const { getWithRetry } = require('./http');
 
-const { USER_AGENT, TIMEOUT, RETRY_ATTEMPTS, RETRY_DELAY } = config.HTTP;
+const { USER_AGENT } = config.HTTP;
 
 const DEFAULT_HEADERS = {
   'User-Agent': USER_AGENT,
@@ -14,11 +14,6 @@ const DEFAULT_HEADERS = {
   'Pragma': 'no-cache',
   'Referer': 'https://www.dcinside.com/'
 };
-
-const axiosInstance = axios.create({
-  timeout: TIMEOUT,
-  headers: DEFAULT_HEADERS
-});
 
 /**
  * DCInside 검색 자동완성 API용 쿼리(k) 인코딩.
@@ -48,16 +43,8 @@ function buildJsonpCallback() {
  * 내부: 재시도 옵션으로 GET 요청 수행
  */
 async function fetchWithRetry(url, options = {}) {
-  const retryOptions = {
-    maxRetries: RETRY_ATTEMPTS,
-    delayMs: RETRY_DELAY,
-    exponentialBackoff: true
-  };
-
-  return withRetry(async () => {
-    const response = await axiosInstance.get(url, options);
-    return response.data;
-  }, retryOptions);
+  // Delegate to shared HTTP helper
+  return getWithRetry(url, { ...options, headers: { ...DEFAULT_HEADERS, ...(options.headers || {}) } });
 }
 
 /**
@@ -107,4 +94,3 @@ module.exports = {
   getAutocomplete,
   encodeAutocompleteKey
 };
-

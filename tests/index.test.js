@@ -3,6 +3,7 @@
 jest.mock('../src/scraper', () => ({
   scrapeBoardPage: jest.fn(),
   getPostContent: jest.fn(),
+  getMobilePostContent: jest.fn(),
 }));
 
 jest.mock('../src/util', () => ({
@@ -10,7 +11,7 @@ jest.mock('../src/util', () => ({
   getRandomUserAgent: jest.fn(() => 'Mock-UA'),
 }));
 
-const { scrapeBoardPage, getPostContent } = require('../src/scraper');
+const { scrapeBoardPage, getPostContent, getMobilePostContent } = require('../src/scraper');
 const { delay, getRandomUserAgent } = require('../src/util');
 
 // Require after mocks
@@ -45,13 +46,21 @@ describe('Public API (index.js) - unit (mocked)', () => {
     expect(res).toEqual(fakeList);
   });
 
-  test('getPost delegates to getPostContent with rest options', async () => {
+  test('getPost delegates to mobile getMobilePostContent with rest options', async () => {
     const fakePost = { postNo: '123', title: 'Hello', author: 'me', date: '', content: '', comments: { totalCount: 0, items: [] } };
-    getPostContent.mockResolvedValue(fakePost);
+    getMobilePostContent.mockResolvedValue(fakePost);
 
     const res = await api.getPost({ galleryId: 'g', postNo: '123', extractImages: true });
 
-    expect(getPostContent).toHaveBeenCalledWith('g', '123', { extractImages: true });
+    expect(getMobilePostContent).toHaveBeenCalledWith('g', '123', { extractImages: true });
+    expect(res).toEqual(fakePost);
+  });
+
+  test('getPostLegacy delegates to legacy getPostContent', async () => {
+    const fakePost = { postNo: '321', title: 'Legacy', author: 'me', date: '', content: '', comments: { totalCount: 0, items: [] } };
+    getPostContent.mockResolvedValue(fakePost);
+    const res = await api.getPostLegacy({ galleryId: 'g', postNo: '321' });
+    expect(getPostContent).toHaveBeenCalledWith('g', '321', {});
     expect(res).toEqual(fakePost);
   });
 
@@ -92,4 +101,3 @@ describe('Public API (index.js) - unit (mocked)', () => {
     expect(getRandomUserAgent).toHaveBeenCalled();
   });
 });
-

@@ -1,156 +1,53 @@
-/**
- * @gurumnyang/dcinside.js
- * 디시인사이드 갤러리 크롤링을 위한 Node.js 라이브러리
- * @module @gurumnyang/dcinside.js
- */
-
-const { scrapeBoardPage, getPostContent } = require('./src/scraper');
+const { scrapeBoardPage, getPostContent, getMobilePostContent } = require('./src/scraper');
 const { delay, getRandomUserAgent } = require('./src/util');
 const scraper = require('./src/scraper');
 const autocomplete = require('./src/autocomplete');
 const searchModule = require('./src/search');
 
-/**
- * 게시글 정보 객체 타입 정의
- * @typedef {Object} PostInfo
- * @property {string} id - 게시글 번호
- * @property {string} type - 게시글 유형 ('notice', 'picture', 'text', 'recommended', 'unknown')
- * @property {string} subject - 말머리
- * @property {string} title - 게시글 제목
- * @property {string} link - 게시글 URL
- * @property {Object} author - 작성자 정보
- * @property {string} author.nickname - 작성자 닉네임
- * @property {string} author.userId - 작성자 ID
- * @property {string} author.ip - 작성자 IP
- * @property {string} date - 작성 날짜
- * @property {number} count - 조회수
- * @property {number} recommend - 추천수
- * @property {number} replyCount - 댓글 수
- */
+async function getPostList({ page, galleryId, boardType = 'all' }) {
+  return scrapeBoardPage(page, galleryId, { boardType });
+}
 
-/**
- * 특정 페이지의 게시글 목록을 수집합니다.
- *
- * @param {Object} options - 크롤링 옵션
- * @param {number} options.page - 페이지 번호
- * @param {string} options.galleryId - 갤러리 ID
- * @param {string} [options.boardType='all'] - 게시판 유형 ('all', 'recommend', 'notice')
- * @returns {Promise<Array<PostInfo>>}
- */
-async function getPostList(options) {
-  const { page, galleryId, boardType = 'all'} = options;
-  
-  return await scrapeBoardPage(
-    page, 
-    galleryId, 
-    { 
-      boardType
+// New default: use mobile post content
+async function getPost({ galleryId, postNo, ...rest }) {
+  return getMobilePostContent(galleryId, postNo, rest);
+}
+
+// Legacy PC version retained for compatibility
+async function getPostLegacy({ galleryId, postNo, ...rest }) {
+  return getPostContent(galleryId, postNo, rest);
+}
+
+async function getPosts({ galleryId, postNumbers, delayMs = 100, onProgress, ...rest }) {
+  const out = [];
+  for (let i = 0; i < postNumbers.length; i++) {
+    let no = postNumbers[i];
+    if (typeof no !== 'string' && typeof no !== 'number') {
+      if (no && typeof no === 'object' && (typeof no.id === 'string' || typeof no.id === 'number')) no = no.id;
+      else { console.warn('Invalid post number entry, skip'); continue; }
     }
-  );
-}
-
-/**
- * 게시글 번호로 게시글 내용을 가져옵니다.
- *
- * @param {Object} options - 크롤링 옵션
- * @param {string} options.galleryId - 갤러리 ID
- * @param {string} options.postNo - 게시글 번호
- * @param {boolean} [options.extractImages] - 이미지 URL 추출 여부
- * @param {boolean} [options.includeImageSource] - 본문에 이미지 URL 포함 여부
- * @returns {Promise<Object|null>} 게시글 내용 객체 또는 실패 시 null
- */
-async function getPost(options) {
-  const { galleryId, postNo, ...restOptions } = options;
-  return await getPostContent(galleryId, postNo, restOptions);
-}
-
-/**
- * 여러 게시글 번호로 게시글 내용을 가져옵니다.
- *
- * @param {Object} options - 크롤링 옵션
- * @param {string} options.galleryId - 갤러리 ID
- * @param {string[]} options.postNumbers - 게시글 번호 배열
- * @param {number} [options.delayMs=100] - 요청 간 지연 시간(ms)
- * @param {function} [options.onProgress] - 진행 상황 콜백 함수 (current, total)
- * @param {boolean} [options.extractImages] - 이미지 URL 추출 여부
- * @param {boolean} [options.includeImageSource] - 본문에 이미지 URL 포함 여부
- * @returns {Promise<Object[]>} 수집된 게시글 객체 배열
- */
-async function getPosts(options) {
-  const { galleryId, postNumbers, delayMs = 100, onProgress, ...restOptions } = options;
-  
-  const posts = [];
-  const total = postNumbers.length;
-  
-  for (let i = 0; i < total; i++) {
     try {
-
-      if(typeof postNumbers[i] !== 'string' && typeof postNumbers[i] !== 'number') {
-        console.warn(`options.postNumbers는 숫자 또는 문자열 배열이어야 합니다.`);
-        if(typeof postNumbers[i] === 'object' && postNumbers[i] !== null) {
-          if(typeof postNumbers[i].id === 'string' || typeof postNumbers[i].id === 'number') {
-            postNumbers[i] = postNumbers[i].id;
-          } else {
-            console.warn(`게시글 번호 ${postNumbers[i]}는 무시됩니다.`);
-            continue;
-          }
-        }
-      }
-
-      const post = await getPostContent(galleryId, postNumbers[i], restOptions);
-      if (post) {
-        posts.push(post);
-      }
-    } catch (error) {
-      console.error(`게시글 ${postNumbers[i]} 크롤링 중 에러 발생: ${error.message}`);
-    }
-    
-    if (typeof onProgress === 'function') {
-      onProgress(i + 1, total);
-    }
-    
-    if (i < total - 1) {
-      await delay(delayMs);
-    }
+      const post = await getPostContent(galleryId, no, rest);
+      if (post) out.push(post);
+    } catch (e) { console.error(`post ${no} error: ${e.message}`); }
+    if (typeof onProgress === 'function') onProgress(i + 1, postNumbers.length);
+    if (i < postNumbers.length - 1) await delay(delayMs);
   }
-  
-  return posts;
+  return out;
 }
 
-/**
- * 검색어를 입력하면 DCInside 자동완성 결과(JSON)를 반환합니다.
- * @param {string} query - 검색어
- * @returns {Promise<object>} 자동완성 결과 객체
- */
-async function getAutocomplete(query) {
-  return await autocomplete.getAutocomplete(query);
-}
-
-/**
- * 통합검색을 수행하고 결과를 반환합니다.
- * @param {string} query - 검색어
- * @param {{ sort?: 'latest' | 'accuracy' }} [options] - 정렬 옵션
- * @returns {Promise<object>} 검색 결과 객체 { query?, gallery?, posts[] }
- */
-async function search(query, options = {}) {
-  return await searchModule.search(query, options);
-}
+async function getAutocomplete(query) { return autocomplete.getAutocomplete(query); }
+async function search(query, options = {}) { return searchModule.search(query, options); }
 
 module.exports = {
-  // 노출할 주요 함수들
   getPostList,
   getPost,
+  getPostLegacy,
   getPosts,
   getAutocomplete,
   search,
-  
-  // 이전 함수명도 호환성을 위해 유지
   getPostNumbers: getPostList,
-  
-  // 유틸리티 함수
   delay,
   getRandomUserAgent,
-  
-  // 원본 함수들도 노출 (고급 사용자를 위해)
-  raw: { ...scraper, ...autocomplete, ...searchModule }
+  raw: { ...scraper, ...autocomplete, ...searchModule },
 };
