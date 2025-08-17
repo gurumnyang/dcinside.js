@@ -1,4 +1,4 @@
-const { scrapeBoardPage, getPostContent, getMobilePostContent } = require('./src/scraper');
+const { scrapeBoardPage, scrapeBoardPageLegacy, getPostContent, getMobilePostContent } = require('./src/scraper');
 const { delay, getRandomUserAgent } = require('./src/util');
 const scraper = require('./src/scraper');
 const autocomplete = require('./src/autocomplete');
@@ -6,6 +6,11 @@ const searchModule = require('./src/search');
 
 async function getPostList({ page, galleryId, boardType = 'all' }) {
   return scrapeBoardPage(page, galleryId, { boardType });
+}
+
+// Legacy: PC board list
+async function getPostListLegacy({ page, galleryId, boardType = 'all' }) {
+  return scrapeBoardPageLegacy(page, galleryId, { boardType });
 }
 
 // New default: use mobile post content
@@ -42,6 +47,7 @@ async function search(query, options = {}) { return searchModule.search(query, o
 module.exports = {
   getPostList,
   getPost,
+  getPostListLegacy,
   getPostLegacy,
   getPosts,
   getAutocomplete,

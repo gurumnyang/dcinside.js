@@ -22,6 +22,11 @@ async function getPostContent(galleryId = 'chatgpt', no, options = {}) {
     const date = extractText($, 'header .gall_date');
 
     const contentEl = $('.gallview_contents .write_div');
+    const e_s_n_o = $('input[name="e_s_n_o"]').val() || '';
+    if (!title && !contentEl.length && !e_s_n_o) {
+      // 비정상 페이지(삭제/부존재 등)로 판단
+      return null;
+    }
     const imgOpts = { mode: extractImages ? 'both' : 'replace', placeholder: 'image', includeSource: includeImageSource };
     const imageUrls = processImages(contentEl, imgOpts);
 
@@ -33,7 +38,6 @@ async function getPostContent(galleryId = 'chatgpt', no, options = {}) {
     const recommendCount = extractText($, '.btn_recommend_box .up_num_box .up_num', 'null');
     const dislikeCount = extractText($, '.btn_recommend_box .down_num_box .down_num', 'null');
 
-    const e_s_n_o = $('input[name="e_s_n_o"]').val() || '';
     const comments = await getCommentsForPost(no, galleryId, e_s_n_o);
 
     const result = { postNo, title, author, date, content, viewCount, recommendCount, dislikeCount, comments };

@@ -155,6 +155,12 @@ declare module "@gurumnyang/dcinside.js" {
   export function getPostList(options: GetPostListOptions): Promise<PostInfo[]>;
 
   /**
+   * (레거시 PC) 페이지 범위 게시글 목록 수집
+   * @deprecated 모바일 기본 API(getPostList)를 사용하세요.
+   */
+  export function getPostListLegacy(options: GetPostListOptions): Promise<PostInfo[]>;
+
+  /**
    * 게시글 번호로 게시글 내용을 가져옵니다.
    */
   export function getPost(options: GetPostOptions): Promise<Post | null>;
@@ -272,6 +278,18 @@ declare module "@gurumnyang/dcinside.js" {
         nickname?: string | null;
         ip?: string | null;
       }
+    ) => Promise<PostInfo[]>;
+    /** 모바일 게시판 목록(기본) */
+    scrapeBoardPage: (
+      page: number,
+      galleryId: string,
+      options?: { boardType?: string; id?: string | null; subject?: string | null; nickname?: string | null; ip?: string | null; }
+    ) => Promise<PostInfo[]>;
+    /** PC 게시판 목록(레거시) */
+    scrapeBoardPageLegacy: (
+      page: number,
+      galleryId: string,
+      options?: { boardType?: string; id?: string | null; subject?: string | null; nickname?: string | null; ip?: string | null; }
     ) => Promise<PostInfo[]>;
     
     getPostContent: (

@@ -1,7 +1,7 @@
-// board.js - board page scraping
+// board/pc.js - PC board page scraping (legacy)
 const cheerio = require('cheerio');
-const config = require('../config');
-const { getWithRetry } = require('../http');
+const config = require('../../config');
+const { getWithRetry } = require('../../http');
 
 const { BASE_URL } = config;
 

@@ -1,10 +1,12 @@
 // thin aggregator for scraper API (folder index)
-const { scrapeBoardPage } = require('./board');
+const board = require('./board');
 const post = require('./post');
 
 module.exports = {
-  scrapeBoardPages: scrapeBoardPage,
-  scrapeBoardPage,
+  // Board (list)
+  scrapeBoardPages: board.scrapeBoardPage,
+  scrapeBoardPage: board.scrapeBoardPage, // default: mobile
+  scrapeBoardPageLegacy: board.scrapeBoardPageLegacy, // legacy: PC
   // PC post-related (legacy)
   getPostContent: post.getPostContent,
   getCommentsForPost: post.getCommentsForPost,

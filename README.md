@@ -2,6 +2,8 @@
 
 디시인사이드 갤러리 크롤링을 위한 Node.js 라이브러리입니다.
 
+모바일 웹(m.dcinside.com) 마크업을 기본으로 사용하도록 마이그레이션되었습니다. PC 웹(데스크톱) 경로는 레거시 API로 계속 제공됩니다.
+
 ## 설치 방법
 
 ```bash
@@ -43,6 +45,12 @@ async function example() {
 }
 
 example();
+```
+
+레거시(PC) 목록 파서는 다음과 같이 호출할 수 있습니다.
+
+```javascript
+const listPc = await dcCrawler.getPostListLegacy({ page: 1, galleryId: 'programming', boardType: 'all' });
 ```
 
 ### 통합검색 (새 기능)
@@ -102,6 +110,7 @@ example();
 const dcCrawler = require('@gurumnyang/dcinside.js');
 
 async function example() {
+  // 모바일 기본 파서
   const postInfoList = await dcCrawler.raw.scrapeBoardPage(
     1,
     'programming',
@@ -119,6 +128,12 @@ async function example() {
 }
 
 example();
+```
+
+PC(레거시) 파서를 사용하려면 `raw.scrapeBoardPageLegacy`를 사용하세요.
+
+```javascript
+const legacy = await dcCrawler.raw.scrapeBoardPageLegacy(1, 'programming', { boardType: 'all' });
 ```
 
 ### 게시글 번호로 게시글 내용 가져오기
@@ -143,6 +158,12 @@ async function example() {
 example();
 ```
 
+레거시(PC) 본문 파서는 다음과 같이 호출할 수 있습니다.
+
+```javascript
+const legacy = await dcCrawler.getPostLegacy({ galleryId: 'programming', postNo: '1234567' });
+```
+
 ### 여러 게시글 내용 한 번에 가져오기
 
 ```javascript
@@ -163,6 +184,16 @@ async function example() {
 
 example();
 ```
+
+## 터미널 브라우저(TUI)
+
+간단한 터미널 UI로 게시판 열람, 글 조회, 검색을 사용할 수 있습니다.
+
+```bash
+npm run tui
+```
+
+메뉴에서 게시판 목록 열람(페이지 이동), 통합검색(정확도/최신), 글 바로 조회(갤ID/번호)를 지원합니다.
 
 ### 특정 페이지의 게시글 내용 수집
 
@@ -374,7 +405,7 @@ const options = {
 
 #### `getPostList(options)`
 
-갤러리 페이지에서 게시글 목록을 수집합니다.
+갤러리 페이지에서 게시글 목록을 수집합니다. 기본은 모바일 파서입니다.
 
 **매개변수:**
 - `options` (객체)
@@ -388,9 +419,15 @@ const options = {
 
 ---
 
+#### `getPostListLegacy(options)`
+
+PC(레거시) 파서로 갤러리 페이지에서 게시글 목록을 수집합니다. 인터페이스는 `getPostList`와 동일합니다.
+
+---
+
 #### `getPost(options)`
 
-게시글 번호로 게시글 내용을 가져옵니다.
+게시글 번호로 게시글 내용을 가져옵니다. 기본은 모바일 파서입니다
 
 **매개변수:**
 - `options` (객체)
@@ -401,6 +438,12 @@ const options = {
 
 **반환값:**
 - `Promise<Post | null>`: 게시글 객체 또는 실패 시 null
+
+---
+
+#### `getPostLegacy(options)`
+
+PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 `getPost`와 동일합니다.
 
 ---
 
