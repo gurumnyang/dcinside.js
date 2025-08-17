@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node run.js",
     "test": "jest",
-    "prepare": "npm test"
+    "prepare": "npm test",
+    "tui": "node src/cli/terminal.js"
   },
   "keywords": [
     "dcinside",
