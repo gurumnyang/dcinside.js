@@ -1,8 +1,15 @@
 # @gurumnyang/dcinside.js
 
-디시인사이드 갤러리 크롤링을 위한 Node.js 라이브러리입니다.
+<div align="center">
+  <a href="https://www.npmjs.com/package/@gurumnyang/dcinside.js">
+    <img src="https://img.shields.io/npm/v/@gurumnyang/dcinside.js?color=%2335C757" alt="NPM Version"/>
+  </a>
+  <a href="https://www.npmjs.com/package/@gurumnyang/dcinside.js">
+    <img src="https://img.shields.io/npm/dt/@gurumnyang/dcinside.js" alt="Downloads"/>
+  </a>
+  <p>디시인사이드 갤러리 크롤링을 위한 Node.js 라이브러리입니다.</p>
+</div>
 
-모바일 웹(m.dcinside.com) 마크업을 기본으로 사용하도록 마이그레이션되었습니다. PC 웹(데스크톱) 경로는 레거시 API로 계속 제공됩니다.
 
 ## 설치 방법
 
