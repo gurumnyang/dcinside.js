@@ -25,7 +25,7 @@ const axiosInstance = axios.create({
  */
 async function getWithRetry(url, options = {}) {
   const retryOptions = {
-    maxRetries: RETRY_ATTEMPTS,
+    maxRetries: options.retryCount || RETRY_ATTEMPTS,
     delayMs: RETRY_DELAY,
     exponentialBackoff: true,
   };
