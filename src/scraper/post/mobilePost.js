@@ -143,7 +143,7 @@ function parseMobilePostHtml(html, options = {}) {
 }
 
 async function getMobilePostContent(galleryId = 'chatgpt', no, options = {}) {
-  const { extractImages = true, includeImageSource = false } = options;
+  const { extractImages = true, includeImageSource = false, retryCount } = options;
   if (no === undefined || no === null) return null;
   const postNo = String(no);
   if (!postNo) return null;
@@ -158,7 +158,7 @@ async function getMobilePostContent(galleryId = 'chatgpt', no, options = {}) {
       'Cache-Control': 'no-cache',
       'Pragma': 'no-cache',
     };
-    const html = await getWithRetry(url, { responseType: 'text', headers: MOBILE_HEADERS });
+    const html = await getWithRetry(url, { responseType: 'text', headers: MOBILE_HEADERS, retryCount });
     const parsed = parseMobilePostHtml(html, { extractImages, includeImageSource });
     if (!parsed) return null;
     return { postNo, ...parsed };

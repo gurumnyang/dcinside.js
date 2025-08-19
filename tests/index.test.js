@@ -46,13 +46,13 @@ describe('Public API (index.js) - unit (mocked)', () => {
     expect(res).toEqual(fakeList);
   });
 
-  test('getPost delegates to mobile getMobilePostContent with rest options', async () => {
+    test('getPost delegates to mobile getMobilePostContent with rest options including retryCount', async () => {
     const fakePost = { postNo: '123', title: 'Hello', author: 'me', date: '', content: '', comments: { totalCount: 0, items: [] } };
     getMobilePostContent.mockResolvedValue(fakePost);
 
-    const res = await api.getPost({ galleryId: 'g', postNo: '123', extractImages: true });
+    const res = await api.getPost({ galleryId: 'g', postNo: '123', extractImages: true, retryCount: 5 });
 
-    expect(getMobilePostContent).toHaveBeenCalledWith('g', '123', { extractImages: true });
+    expect(getMobilePostContent).toHaveBeenCalledWith('g', '123', { extractImages: true, retryCount: 5 });
     expect(res).toEqual(fakePost);
   });
 
@@ -80,13 +80,14 @@ describe('Public API (index.js) - unit (mocked)', () => {
       delayMs: 10,
       onProgress: () => { progressCalls++; },
       extractImages: true,
+      retryCount: 2,
     });
 
     // getPostContent should receive normalized ids: '1', 2, 'bad', 3
-    expect(getPostContent).toHaveBeenNthCalledWith(1, 'g', '1', { extractImages: true });
-    expect(getPostContent).toHaveBeenNthCalledWith(2, 'g', 2, { extractImages: true });
-    expect(getPostContent).toHaveBeenNthCalledWith(3, 'g', 'bad', { extractImages: true });
-    expect(getPostContent).toHaveBeenNthCalledWith(4, 'g', 3, { extractImages: true });
+  expect(getPostContent).toHaveBeenNthCalledWith(1, 'g', '1', { extractImages: true, retryCount: 2 });
+  expect(getPostContent).toHaveBeenNthCalledWith(2, 'g', 2, { extractImages: true, retryCount: 2 });
+  expect(getPostContent).toHaveBeenNthCalledWith(3, 'g', 'bad', { extractImages: true, retryCount: 2 });
+  expect(getPostContent).toHaveBeenNthCalledWith(4, 'g', 3, { extractImages: true, retryCount: 2 });
 
     // delay is called between iterations (n-1 times)
     expect(delay).toHaveBeenCalledTimes(numbers.length - 1);

@@ -52,9 +52,8 @@ async function main() {
         // 새로운 기능: 이미지 URL 추출
         extractImages: true,
         includeImageSource: false,
-        // 새로운 기능: 재시도 옵션 설정
-        retryAttempts: 3,
-        retryDelay: 1000,
+        // 새로운 기능: 재시도 옵션 설정 (호출 단위)
+        retryCount: 3,
         onProgress: (current, total) => {
           if (current === 1) {
             postBar = multibar.create(total, 0, { title: `페이지 ${page} 게시글 수집` });
@@ -152,9 +151,8 @@ async function main() {
   const posts = await dcCrawler.getPosts({
     galleryId: 'example',
     postNumbers: ['12345678'],
-    // 재시도 관련 설정
-    retryAttempts: 5,    // 최대 5회 재시도
-    retryDelay: 2000,    // 재시도 간 2초 지연
+  // 재시도 관련 설정 (호출 단위)
+  retryCount: 5,
     // 지수 백오프가 자동 적용됨 (1회: 2초, 2회: 4초, 3회: 8초...)
   });
 } catch (error) {

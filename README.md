@@ -216,6 +216,13 @@ const options = {
 };
 ```
 
+개별 호출 단위로 재시도 횟수를 바꾸고 싶다면 다음처럼 `retryCount`를 지정하세요.
+
+```javascript
+await dc.getPost({ galleryId: 'chatgpt', postNo: 12345, retryCount: 5 });
+await dc.getPosts({ galleryId: 'chatgpt', postNumbers: [111, 222], retryCount: 5 });
+```
+
 ## API 레퍼런스
 
 ### 핵심 함수
@@ -252,6 +259,7 @@ PC(레거시) 파서로 갤러리 페이지에서 게시글 목록을 수집합�
   - `postNo` (string | number): 게시글 번호
   - `extractImages` (boolean, 선택): 이미지 URL 추출 여부 (기본값: false)
   - `includeImageSource` (boolean, 선택): 본문에 이미지 URL 포함 여부 (기본값: false)
+  - `retryCount` (number, 선택): 이 호출에서 사용할 재시도 횟수 (전역 기본값을 덮어씀)
 
 **반환값:**
 - `Promise<Post | null>`: 게시글 객체 또는 실패 시 null
@@ -276,8 +284,7 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
   - `extractImages` (불리언, 선택): 이미지 URL 추출 여부 (기본값: false)
   - `includeImageSource` (불리언, 선택): 본문에 이미지 URL 포함 여부 (기본값: false)
   - `onProgress` (함수, 선택): 진행 상황 콜백 함수 (current, total)
-  - `retryAttempts` (숫자, 선택): 최대 재시도 횟수
-  - `retryDelay` (숫자, 선택): 재시도 간 지연 시간(ms)
+  - `retryCount` (숫자, 선택): 각 게시글 요청에서 사용할 재시도 횟수 (전역 기본값을 덮어씀)
 
 **반환값:**
 - `Promise<Post[]>`: 수집된 게시글 객체 배열

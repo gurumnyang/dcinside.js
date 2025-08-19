@@ -87,6 +87,8 @@ declare module "@gurumnyang/dcinside.js" {
     extractImages?: boolean;
     /** 본문 텍스트에 이미지 URL을 포함할지 여부 (기본값: false) */
     includeImageSource?: boolean;
+    /** 이 게시글 요청에 사용할 재시도 횟수 (전역 기본값을 덮어씀) */
+    retryCount?: number;
   }
 
   /**
@@ -101,10 +103,7 @@ declare module "@gurumnyang/dcinside.js" {
     /** 본문 텍스트에 이미지 URL을 포함할지 여부 (기본값: false) */
     includeImageSource?: boolean;
     onProgress?: (current: number, total: number) => void;
-    /** 최대 재시도 횟수 */
-    retryAttempts?: number;
-    /** 재시도 간 지연 시간(ms) */
-    retryDelay?: number;
+    retryCount?: number;
   }
 
   /**
@@ -297,7 +296,8 @@ declare module "@gurumnyang/dcinside.js" {
       no: string | number,
       options?: {
         extractImages?: boolean;
-        includeImageSource?: boolean;
+  includeImageSource?: boolean;
+  retryCount?: number;
       }
     ) => Promise<Post | null>;
     
@@ -307,7 +307,8 @@ declare module "@gurumnyang/dcinside.js" {
       no: string | number,
       options?: {
         extractImages?: boolean;
-        includeImageSource?: boolean;
+  includeImageSource?: boolean;
+  retryCount?: number;
       }
     ) => Promise<Post | null>;
     
