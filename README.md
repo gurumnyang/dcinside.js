@@ -35,20 +35,23 @@ yarn add @gurumnyang/dcinside.js
 
 ## 사용 방법
 
-### 마이너 갤러리 페이지에서 게시글 목록 수집
+### 빠른 시작
 
 ```javascript
-const dcCrawler = require('@gurumnyang/dcinside.js');
+const dc = require('@gurumnyang/dcinside.js');
 
-async function example() {
-  const postList = await dcCrawler.getPostList({
-    page: 1,
-    galleryId: 'programming',
-    boardType: 'all', // 'all', 'recommend', 'notice' 중 하나
-  });
-  
-  console.log('수집된 게시글 정보:', postList);
-  // 각 게시글의 id, 제목, 작성자, 조회수 등의 정보가 포함되어 있음
+(async () => {
+  // 1) 페이지별 게시글 목록 (모바일 파서 기본)
+  const list = await dc.getPostList({ page: 1, galleryId: 'chatgpt', boardType: 'all' });
+
+  // 2) 단일 게시글 본문/댓글
+  const post = await dc.getPost({ galleryId: 'chatgpt', postNo: list[0].id, extractImages: true });
+
+  // 3) 통합검색
+  const search = await dc.search('챗지피티');
+
+  console.log(list.length, post?.title, search.posts.length);
+})();
 }
 
 example();
@@ -60,28 +63,7 @@ example();
 const listPc = await dcCrawler.getPostListLegacy({ page: 1, galleryId: 'programming', boardType: 'all' });
 ```
 
-### 통합검색 (새 기능)
-
-```javascript
-const dcCrawler = require('@gurumnyang/dcinside.js');
-
-async function example() {
-  // 기본: 사이트 기본 정렬(정확도)로 검색
-  const result = await dcCrawler.search('검색쿼리');
-  // result = { query?: string, galleries: SearchGalleryItem[], posts: SearchPost[] }
-  console.log(result.galleries.slice(0, 3));
-  console.log(result.posts.slice(0, 3));
-
-  // 정렬 지정: 최신순 또는 정확도
-  const latest = await dcCrawler.search('검색쿼리', { sort: 'latest' });
-  const accuracy = await dcCrawler.search('검색쿼리', { sort: 'accuracy' });
-}
-
-// 참고: 통합검색 반환 값에는 갤러리 구분 필드가 포함됩니다.
-// - result.galleries[i].galleryType: 'main' | 'mgallery' | 'mini' | 'person'
-// - result.posts[i].galleryType: 'main' | 'mgallery' | 'mini' | 'person'
-```
-#### 검색 결과 타입 상세
+#### 타입 상세
 
 ```javascript
 // SearchGalleryItem 예시
@@ -111,86 +93,6 @@ async function example() {
 example();
 ```
 
-### 갤러리 게시판 페이지에서 게시글 데이터 불러오기(raw API)
-
-```javascript
-const dcCrawler = require('@gurumnyang/dcinside.js');
-
-async function example() {
-  // 모바일 기본 파서
-  const postInfoList = await dcCrawler.raw.scrapeBoardPage(
-    1,
-    'programming',
-    {
-      boardType: 'all', // 'all', 'recommend', 'notice' 중 하나
-      id: null,        // 특정 번호만 필터링하려면 지정
-      subject: null,    // 특정 말머리만 필터링하려면 지정
-      nickname: null,   // 특정 닉네임만 필터링하려면 지정
-      ip: null          // 특정 IP만 필터링하려면 지정
-    }
-  );
-  
-  console.log('수집된 게시글 정보:', postInfoList);
-  // 수집된 각 게시글의 제목, 작성자, 조회수 등 모든 정보 확인 가능
-}
-
-example();
-```
-
-PC(레거시) 파서를 사용하려면 `raw.scrapeBoardPageLegacy`를 사용하세요.
-
-```javascript
-const legacy = await dcCrawler.raw.scrapeBoardPageLegacy(1, 'programming', { boardType: 'all' });
-```
-
-### 게시글 번호로 게시글 내용 가져오기
-
-```javascript
-const dcCrawler = require('@gurumnyang/dcinside.js');
-
-async function example() {
-  const post = await dcCrawler.getPost({
-    galleryId: 'programming',
-    postNo: '1234567'
-  });
-  
-  if (post) {
-    console.log('게시글 제목:', post.title);
-    console.log('작성자:', post.author);
-    console.log('내용:', post.content);
-    console.log('댓글 수:', post.comments.totalCount);
-  }
-}
-
-example();
-```
-
-레거시(PC) 본문 파서는 다음과 같이 호출할 수 있습니다.
-
-```javascript
-const legacy = await dcCrawler.getPostLegacy({ galleryId: 'programming', postNo: '1234567' });
-```
-
-### 여러 게시글 내용 한 번에 가져오기
-
-```javascript
-const dcCrawler = require('@gurumnyang/dcinside.js');
-
-async function example() {
-  const posts = await dcCrawler.getPosts({
-    galleryId: 'programming',
-    postNumbers: ['1234567', '1234568', '1234569'],
-    delayMs: 100,
-    onProgress: (current, total) => {
-      console.log(`진행 상황: ${current}/${total}`);
-    }
-  });
-  
-  console.log(`총 ${posts.length}개 게시글 수집 완료`);
-}
-
-example();
-```
 
 ## 터미널 브라우저(TUI)
 
@@ -201,98 +103,6 @@ npm run tui
 ```
 
 메뉴에서 게시판 목록 열람(페이지 이동), 통합검색(정확도/최신), 글 바로 조회(갤ID/번호)를 지원합니다.
-
-### 특정 페이지의 게시글 내용 수집
-
-```javascript
-const dcCrawler = require('@gurumnyang/dcinside.js');
-const cliProgress = require('cli-progress');
-
-async function example() {
-  // 우선 게시글 정보 목록을 가져옴
-  const postInfoList = await dcCrawler.getPostList({
-    page: 1,
-    galleryId: 'programming',
-    boardType: 'all'
-  });
-  
-  // 게시글 번호만 추출
-  const postNumbers = postInfoList.map(post => post.id);
-  
-  // 진행 상황 표시용 프로그레스 바
-  const progressBar = new cliProgress.SingleBar({
-    format: '게시글 진행 |{bar}| {percentage}% || {value}/{total}',
-  });
-  
-  // 수집한 게시글 번호로 게시글 내용 가져오기
-  const posts = await dcCrawler.getPosts({
-    galleryId: 'programming',
-    postNumbers: postNumbers,
-    delayMs: 100,
-    onProgress: (current, total) => {
-      if (current === 1) progressBar.start(total, 0);
-      progressBar.update(current);
-      if (current === total) progressBar.stop();
-    }
-  });
-  
-  console.log(`총 ${posts.length}개 게시글 수집 완료`);
-}
-
-example();
-```
-
-## 자동완성(Autocomplete)
-
-dcinside 검색 자동완성 API를 지원합니다.
-
-### 빠른 시작
-
-```javascript
-const dc = require('@gurumnyang/dcinside.js');
-
-async function main() {
-  const result = await dc.getAutocomplete('chatgpt');
-  console.log(result);
-  // 예: result.gallery.total, result.gallery["0"].ko_name 등
-}
-
-main();
-```
-
-### Raw API
-
-```javascript
-const dc = require('@gurumnyang/dcinside.js');
-
-async function main() {
-  const result = await dc.raw.getAutocomplete('chatgpt');
-  console.log(result);
-}
-
-main();
-```
-
-### 응답 구조(요약)
-
-```json
-{
-  "gallery": {
-    "0": {
-      "name": "chatgpt",
-      "ko_name": "챗지피티(ChatGPT)",
-      "gall_type": "M",
-      "link": "https://gall.dcinside.com/mgallery/board/lists/?id=chatgpt"
-      // new_post, total_post 등은 상황에 따라 존재
-    },
-    "total": 1
-  },
-  "prgallery": { "total": "0" },
-  "recommend": { "0": { /* gallery와 유사 */ }, "total": "11" },
-  "wiki": { "0": { "title": "ChatGPT", "gall_type": "WIKI" } },
-  "time": { "time": "1754991744332" }
-}
-```
 
 ### User-Agent 관련 유틸리티 함수
 
@@ -415,11 +225,11 @@ const options = {
 갤러리 페이지에서 게시글 목록을 수집합니다. 기본은 모바일 파서입니다.
 
 **매개변수:**
-- `options` (객체)
-  - `page` (숫자): 페이지 번호
-  - `galleryId` (문자열): 갤러리 ID
-  - `boardType` (문자열, 선택): 게시판 유형 ('all', 'recommend', 'notice' 중 하나, 기본값: 'all')
-  - `delayMs` (숫자, 선택): 요청 간 지연 시간(ms)
+- `options` (GetPostListOptions)
+  - `page` (number): 페이지 번호
+  - `galleryId` (string): 갤러리 ID
+  - `boardType` (boardType, 선택): 게시판 유형 ('all', 'recommend', 'notice' 중 하나, 기본값: 'all')
+  - `delayMs` (number, 선택): 요청 간 지연 시간(ms)
 
 **반환값:**
 - `Promise<PostInfo[]>`: 게시글 정보 객체의 배열
@@ -437,11 +247,11 @@ PC(레거시) 파서로 갤러리 페이지에서 게시글 목록을 수집합�
 게시글 번호로 게시글 내용을 가져옵니다. 기본은 모바일 파서입니다
 
 **매개변수:**
-- `options` (객체)
-  - `galleryId` (문자열): 갤러리 ID
-  - `postNo` (문자열 또는 숫자): 게시글 번호
-  - `extractImages` (불리언, 선택): 이미지 URL 추출 여부 (기본값: false)
-  - `includeImageSource` (불리언, 선택): 본문에 이미지 URL 포함 여부 (기본값: false)
+- `options` (GetPostOptions)
+  - `galleryId` (string): 갤러리 ID
+  - `postNo` (string | number): 게시글 번호
+  - `extractImages` (boolean, 선택): 이미지 URL 추출 여부 (기본값: false)
+  - `includeImageSource` (boolean, 선택): 본문에 이미지 URL 포함 여부 (기본값: false)
 
 **반환값:**
 - `Promise<Post | null>`: 게시글 객체 또는 실패 시 null
