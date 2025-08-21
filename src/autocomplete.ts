@@ -1,8 +1,6 @@
-// autocomplete.js
-
-const { CrawlError } = require('./util');
-const config = require('./config');
-const { getWithRetry } = require('./http');
+import { CrawlError } from './util';
+import config = require('./config');
+import { getWithRetry } from './http';
 
 const { USER_AGENT } = config.HTTP;
 
@@ -15,13 +13,7 @@ const DEFAULT_HEADERS = {
   'Referer': 'https://www.dcinside.com/'
 };
 
-/**
- * DCInside 검색 자동완성 API용 쿼리(k) 인코딩.
- * UTF-8 바이트를 대문자 16진수로 변환하여 ".EA.B2.80" 형태로 이어붙입니다.
- * @param {string} query
- * @returns {string}
- */
-function encodeAutocompleteKey(query) {
+function encodeAutocompleteKey(query: string): string {
   if (typeof query !== 'string') return '';
   const bytes = Buffer.from(query, 'utf8');
   return Array.from(bytes)
@@ -29,30 +21,17 @@ function encodeAutocompleteKey(query) {
     .join('');
 }
 
-/**
- * jQuery JSONP callback 문자열 생성
- * @returns {{ callback: string, ts: number }}
- */
-function buildJsonpCallback() {
+function buildJsonpCallback(): { callback: string, ts: number } {
   const ts = Date.now();
   const rand = Math.floor(Math.random() * 1e17).toString().padStart(17, '0');
   return { callback: `jQuery${rand}_${ts}`, ts };
 }
 
-/**
- * 내부: 재시도 옵션으로 GET 요청 수행
- */
-async function fetchWithRetry(url, options = {}) {
-  // Delegate to shared HTTP helper
+async function fetchWithRetry(url: string, options: any = {}) {
   return getWithRetry(url, { ...options, headers: { ...DEFAULT_HEADERS, ...(options.headers || {}) } });
 }
 
-/**
- * DCInside 검색 자동완성(JSONP) 결과를 가져와 JSON으로 반환합니다.
- * @param {string} query - 검색어(한글 가능)
- * @returns {Promise<object>} - 자동완성 결과 객체
- */
-async function getAutocomplete(query) {
+async function getAutocomplete(query: string): Promise<any> {
   if (!query || typeof query !== 'string') {
     throw new CrawlError('유효한 검색어(query)가 필요합니다.', 'parse');
   }
@@ -84,13 +63,10 @@ async function getAutocomplete(query) {
     }
     const jsonText = data.slice(start + 1, end).trim();
     return JSON.parse(jsonText);
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof CrawlError) throw error;
     throw new CrawlError(`자동완성 처리 중 오류: ${error.message}`, 'unknown', error);
   }
 }
 
-module.exports = {
-  getAutocomplete,
-  encodeAutocompleteKey
-};
+export = { getAutocomplete, encodeAutocompleteKey };

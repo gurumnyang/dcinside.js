@@ -1,9 +1,9 @@
-// search/index.js - thin aggregator
-const config = require('../config');
-const { getWithRetry } = require('../http');
-const { CrawlError } = require('../util');
+// search/index.ts - thin aggregator (TS)
+import config = require('../config');
+import { getWithRetry } from '../http';
+import { CrawlError } from '../util';
 const { encodeAutocompleteKey } = require('../autocomplete');
-const { parseSearchHtml } = require('./parse');
+import { parseSearchHtml } from './parse';
 
 const DEFAULT_HEADERS = {
   'User-Agent': config.HTTP.USER_AGENT,
@@ -14,11 +14,11 @@ const DEFAULT_HEADERS = {
   'Referer': 'https://www.dcinside.com/',
 };
 
-async function fetchWithRetry(url, options = {}) {
+async function fetchWithRetry(url: string, options: any = {}) {
   return getWithRetry(url, { ...options, headers: { ...DEFAULT_HEADERS, ...(options.headers || {}) }, responseType: 'text' });
 }
 
-async function search(query, options = {}) {
+async function search(query: string, options: { sort?: 'latest' | 'accuracy' } = {}) {
   if (!query || typeof query !== 'string') throw new CrawlError('유효한 검색어(query)가 필요합니다', 'parse');
   const k = encodeAutocompleteKey(query);
   const sort = options && (options.sort === 'latest' || options.sort === 'accuracy') ? options.sort : undefined;
@@ -28,5 +28,4 @@ async function search(query, options = {}) {
   return parseSearchHtml(html, 'https://search.dcinside.com');
 }
 
-module.exports = { search, parseSearchHtml };
-
+export = { search, parseSearchHtml };

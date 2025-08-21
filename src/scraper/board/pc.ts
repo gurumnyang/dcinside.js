@@ -1,11 +1,14 @@
-// board/pc.js - PC board page scraping (legacy)
-const cheerio = require('cheerio');
-const config = require('../../config');
-const { getWithRetry } = require('../../http');
+import * as cheerio from 'cheerio';
+import config = require('../../config');
+import { getWithRetry } from '../../http';
 
-const { BASE_URL } = config;
+const { BASE_URL } = config as any;
 
-async function scrapeBoardPage(page, galleryId, options = {}) {
+async function scrapeBoardPage(
+  page: number,
+  galleryId: string,
+  options: { boardType?: 'all' | 'recommend' | 'notice'; id?: string; subject?: string; nickname?: string; ip?: string } = {}
+): Promise<any[]> {
   const { boardType = 'all', id, subject, nickname, ip } = options;
   if (page <= 0) return [];
 
@@ -15,7 +18,7 @@ async function scrapeBoardPage(page, galleryId, options = {}) {
   try {
     const html = await getWithRetry(url);
     const $ = cheerio.load(html);
-    const posts = [];
+    const posts: any[] = [];
     const types = [
       { dataType: 'icon_notice', type: 'notice' },
       { dataType: 'icon_pic', type: 'picture' },
@@ -61,11 +64,12 @@ async function scrapeBoardPage(page, galleryId, options = {}) {
     });
 
     return [...posts];
-  } catch (e) {
+  } catch (e: any) {
+    // eslint-disable-next-line no-console
     console.error(`게시판 ${page} 수집 오류: ${e.message}`);
     return [];
   }
 }
 
-module.exports = { scrapeBoardPage };
+export = { scrapeBoardPage };
 

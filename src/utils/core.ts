@@ -1,19 +1,20 @@
-const { CrawlError } = require('./error');
+import { CrawlError } from './error';
 
-function validateNumberInput(input, defaultValue) {
-  const n = parseInt(input, 10);
+export function validateNumberInput(input: string | number, defaultValue: number): number {
+  const n = parseInt(String(input), 10);
   return isNaN(n) ? defaultValue : n;
 }
 
-function delay(ms) {
+export function delay(ms: number): Promise<void> {
   if (typeof ms !== 'number' || isNaN(ms)) {
     ms = 100;
+    // eslint-disable-next-line no-console
     console.warn(`delay 함수의 유효하지 않은 값, 기본 ${ms}ms 사용`);
   }
   return new Promise(res => setTimeout(res, ms));
 }
 
-function getRandomUserAgent() {
+export function getRandomUserAgent(): string {
   const agents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0',
@@ -28,27 +29,24 @@ function getRandomUserAgent() {
   return agents[Math.floor(Math.random() * agents.length)];
 }
 
-const withRetry = async (fn, options = {}) => {
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: { maxRetries?: number; delayMs?: number; exponentialBackoff?: boolean } = {}
+): Promise<T> {
   const { maxRetries = 3, delayMs = 1000, exponentialBackoff = true } = options;
-  let lastError;
+  let lastError: any;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try { return await fn(); }
-    catch (error) {
+    catch (error: any) {
       lastError = error;
       if (error instanceof CrawlError && !error.isRetryable()) throw error;
       if (attempt === maxRetries) throw error;
       const wait = exponentialBackoff ? delayMs * Math.pow(2, attempt) : delayMs;
+      // eslint-disable-next-line no-console
       console.warn(`시도 ${attempt + 1}/${maxRetries + 1} 실패. ${wait}ms 후 재시도..`);
       await delay(wait);
     }
   }
   throw lastError;
-};
-
-module.exports = {
-  validateNumberInput,
-  delay,
-  getRandomUserAgent,
-  withRetry,
-};
+}
 

@@ -1,13 +1,13 @@
-// post.js - single post scraping
-const cheerio = require('cheerio');
-const config = require('../../config');
-const { getWithRetry } = require('../../http');
+import * as cheerio from 'cheerio';
+import config = require('../../config');
+import { getWithRetry } from '../../http';
 const { extractText, processImages } = require('./html');
 const { getCommentsForPost } = require('./comments');
+import type { Post } from '../../types';
 
-const { BASE_URL } = config;
+const { BASE_URL } = config as any;
 
-async function getPostContent(galleryId = 'chatgpt', no, options = {}) {
+async function getPostContent(galleryId: string = 'chatgpt', no: string | number, options: { extractImages?: boolean; includeImageSource?: boolean } = {}): Promise<Post | null> {
   const { extractImages = true, includeImageSource = false } = options;
   if (no === undefined || no === null) return null;
   const postNo = String(no);
@@ -24,11 +24,10 @@ async function getPostContent(galleryId = 'chatgpt', no, options = {}) {
     const contentEl = $('.gallview_contents .write_div');
     const e_s_n_o = $('input[name="e_s_n_o"]').val() || '';
     if (!title && !contentEl.length && !e_s_n_o) {
-      // 비정상 페이지(삭제/부존재 등)로 판단
       return null;
     }
-    const imgOpts = { mode: extractImages ? 'both' : 'replace', placeholder: 'image', includeSource: includeImageSource };
-    const imageUrls = processImages(contentEl, imgOpts);
+    const imgOpts = { mode: extractImages ? 'both' as const : 'replace' as const, placeholder: 'image', includeSource: includeImageSource };
+    const imageUrls = processImages(contentEl, imgOpts) || undefined;
 
     contentEl.find('br').replaceWith('\n');
     contentEl.find('p, div, li').each((_, el) => $(el).after('\n'));
@@ -38,15 +37,16 @@ async function getPostContent(galleryId = 'chatgpt', no, options = {}) {
     const recommendCount = extractText($, '.btn_recommend_box .up_num_box .up_num', 'null');
     const dislikeCount = extractText($, '.btn_recommend_box .down_num_box .down_num', 'null');
 
-    const comments = await getCommentsForPost(no, galleryId, e_s_n_o);
+    const comments = await getCommentsForPost(no, galleryId, String(e_s_n_o));
 
-    const result = { postNo, title, author, date, content, viewCount, recommendCount, dislikeCount, comments };
-    if (extractImages && imageUrls && imageUrls.length) result.images = imageUrls;
+    const result: Post = { postNo, title, author, date, content, viewCount, recommendCount, dislikeCount, comments: comments || { totalCount: 0, items: [] } };
+    if (extractImages && imageUrls && imageUrls.length) (result as any).images = imageUrls;
     return result;
-  } catch (e) {
+  } catch (e: any) {
+    // eslint-disable-next-line no-console
     console.error(`게시글 ${no} 수집 오류: ${e.message} (URL: ${url})`);
     return null;
   }
 }
 
-module.exports = { getPostContent };
+export = { getPostContent };

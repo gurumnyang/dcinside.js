@@ -1,4 +1,5 @@
 // http.js - shared axios client with retry helpers
+// @ts-check
 
 const axios = require('axios');
 const { withRetry, createHttpError, getRandomUserAgent } = require('./util');
@@ -12,7 +13,8 @@ const DEFAULT_HEADERS = {
 };
 
 // Reusable axios instance
-const axiosInstance = axios.create({
+// axios types in JSDoc can be strict; cast for create()
+const axiosInstance = (/** @type {any} */(axios)).create({
   timeout: TIMEOUT,
   headers: DEFAULT_HEADERS,
 });
@@ -20,22 +22,23 @@ const axiosInstance = axios.create({
 /**
  * Perform GET with retry/backoff. Optionally overrides headers.
  * @param {string} url
- * @param {object} options axios options
+ * @param {import('axios').AxiosRequestConfig} [options] axios options
  * @returns {Promise<any>} response.data
  */
 async function getWithRetry(url, options = {}) {
+  const { retryCount, ...axiosConfig } = /** @type {any} */ (options || {});
   const retryOptions = {
-    maxRetries: options.retryCount || RETRY_ATTEMPTS,
+    maxRetries: retryCount || RETRY_ATTEMPTS,
     delayMs: RETRY_DELAY,
     exponentialBackoff: true,
   };
 
   try {
     return await withRetry(async () => {
-      const finalOptions = { ...options };
+      const finalOptions = { ...axiosConfig };
       if (config.CRAWL && config.CRAWL.RANDOM_USER_AGENT) {
         finalOptions.headers = {
-          ...(options.headers || {}),
+          ...(axiosConfig.headers || {}),
           'User-Agent': getRandomUserAgent(),
         };
       }
@@ -53,10 +56,11 @@ async function getWithRetry(url, options = {}) {
  * Perform POST with retry/backoff. Optionally overrides headers.
  * @param {string} url
  * @param {any} data
- * @param {object} options axios options
+ * @param {import('axios').AxiosRequestConfig} [options] axios options
  * @returns {Promise<any>} response.data
  */
 async function postWithRetry(url, data, options = {}) {
+  const { retryCount, ...axiosConfig } = /** @type {any} */ (options || {});
   const retryOptions = {
     maxRetries: RETRY_ATTEMPTS,
     delayMs: RETRY_DELAY,
@@ -65,10 +69,10 @@ async function postWithRetry(url, data, options = {}) {
 
   try {
     return await withRetry(async () => {
-      const finalOptions = { ...options };
+      const finalOptions = { ...axiosConfig };
       if (config.CRAWL && config.CRAWL.RANDOM_USER_AGENT) {
         finalOptions.headers = {
-          ...(options.headers || {}),
+          ...(axiosConfig.headers || {}),
           'User-Agent': getRandomUserAgent(),
         };
       }

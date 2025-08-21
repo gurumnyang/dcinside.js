@@ -1,8 +1,31 @@
-// parse.js - HTML parser for combine search
-const cheerio = require('cheerio');
-const { CrawlError } = require('../util');
+import * as cheerio from 'cheerio';
+import { CrawlError } from '../util';
 
-function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
+export function parseSearchHtml(
+  html: string,
+  baseUrl: string = 'https://search.dcinside.com'
+): {
+  query?: string;
+  galleries: Array<{
+    name?: string;
+    id?: string;
+    type?: string;
+    galleryType?: string;
+    link: string;
+    rank?: number;
+    new_post?: number;
+    total_post?: number;
+  }>;
+  posts: Array<{
+    title: string;
+    content?: string;
+    galleryName?: string;
+    galleryId?: string;
+    galleryType?: string;
+    date?: string;
+    link: string;
+  }>;
+} {
   if (typeof html !== 'string' || !html.trim()) {
     throw new CrawlError('검색 응답이 비어있습니다.', 'parse');
   }
@@ -10,8 +33,8 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
   const $ = cheerio.load(html);
   const query = $('input.in_keyword').attr('value') || undefined;
 
-  const galleries = [];
-  const seenGalleryLinks = new Set();
+  const galleries: Array<any> = [];
+  const seenGalleryLinks = new Set<string>();
   const gallContainerSelector = 'li, .result, .sch_result, .box_result, tr, .wrap_result, .gall_result, .result_item';
   const gallAnchorSelector = 'a[href*="/board/lists/?id="], a[href*="/mgallery/board/lists/?id="], a[href*="/mini/board/lists/?id="]';
 
@@ -27,7 +50,7 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
     let name = a.text().trim();
     if (!name) name = container.find('.tit, .title, .name, strong, a').first().text().trim();
 
-    let id, type, galleryType;
+    let id: string | undefined, type: string | undefined, galleryType: string | undefined;
     try {
       const u = new URL(link, baseUrl);
       id = u.searchParams.get('id') || undefined;
@@ -36,13 +59,13 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
       else if (u.pathname.includes('/person/')) type = 'person';
       else type = 'board';
       galleryType = type === 'board' ? 'main' : type;
-    } catch (_) {}
+    } catch {}
 
     const rankEl = container.find('.rank, [class*="rank"]').first();
-    const toNum = (t) => { const s = (t || '').replace(/[^\d]/g, ''); return s ? Number(s) : undefined; };
+    const toNum = (t: string) => { const s = (t || '').replace(/[^\d]/g, ''); return s ? Number(s) : undefined; };
     const rank = rankEl.length ? toNum(rankEl.text()) : undefined;
     const fullText = container.text().replace(/\s+/g, ' ').trim();
-    let new_post, total_post;
+    let new_post: number | undefined, total_post: number | undefined;
     const m = fullText.match(/\s*글\s*([\d,]+)\s*\/\s*([\d,]+)/);
     if (m) { new_post = Number(m[1].replace(/,/g, '')); total_post = Number(m[2].replace(/,/g, '')); }
 
@@ -50,8 +73,8 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
     seenGalleryLinks.add(link);
   });
 
-  const posts = [];
-  const seenLinks = new Set();
+  const posts: Array<any> = [];
+  const seenLinks = new Set<string>();
   const containerSelector = '.sch_result li';
 
   $(containerSelector).each((_, el) => {
@@ -70,7 +93,7 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
     let content = container.find('p.link_dsc_txt:not(.dsc_sub)').first().text().replace(/\s+/g, ' ').trim();
     if (!content) {
       const noiseRe = /(최신|정확|검색|공식)/;
-      const arr = [];
+      const arr: string[] = [];
       container.find('.desc, .txt, .cont, p').each((_, x) => {
         const t = $(x).text().replace(/\s+/g, ' ').trim(); if (t && t.length >= 8 && !noiseRe.test(t)) arr.push(t);
       });
@@ -81,9 +104,9 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
     const ds = container.find('span.date_time').first().text().trim();
     const ct = container.text().replace(/\s+/g, ' ');
     const dm = ds || ct.match(/(\d{4}|\d{2})[./-](\d{1,2})[./-](\d{1,2})(?:\s+(\d{1,2}:\d{2}(?::\d{2})?))?/);
-    if (dm) date = typeof dm === 'string' ? dm : dm[0];
+    if (dm) date = typeof dm === 'string' ? dm : (dm as RegExpMatchArray)[0];
 
-    let galleryId, galleryName, galleryType;
+    let galleryId: string | undefined, galleryName: string | undefined, galleryType: string | undefined;
     try {
       const u = new URL(link, baseUrl);
       galleryId = u.searchParams.get('id') || undefined;
@@ -91,7 +114,7 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
       else if (u.pathname.includes('/mini/')) galleryType = 'mini';
       else if (u.pathname.includes('/person/')) galleryType = 'person';
       else galleryType = 'main';
-    } catch (_) {}
+    } catch {}
 
     const nameFromSub = container.find('p.link_dsc_txt.dsc_sub a.sub_txt').first().text().trim();
     const nameFromCate = !nameFromSub ? container.find('.gall, .board, .name, .cate a, .cate, .category').first().text().trim() : '';
@@ -104,6 +127,4 @@ function parseSearchHtml(html, baseUrl = 'https://search.dcinside.com') {
 
   return { query, galleries, posts };
 }
-
-module.exports = { parseSearchHtml };
 

@@ -1,13 +1,15 @@
-// board/mobile.js - mobile board page scraping
-const cheerio = require('cheerio');
-const { getWithRetry } = require('../../http');
+import * as cheerio from 'cheerio';
+import { getWithRetry } from '../../http';
 
 const MOBILE_BASE_URL = 'https://m.dcinside.com';
 
-async function scrapeMobileBoardPage(page, galleryId, options = {}) {
+async function scrapeMobileBoardPage(
+  page: number,
+  galleryId: string,
+  options: { boardType?: 'all' | 'recommend' | 'notice'; id?: string; subject?: string; nickname?: string; ip?: string } = {}
+): Promise<any[]> {
   const { boardType = 'all', id, subject, nickname, ip } = options;
   if (boardType === 'notice') {
-    // 모바일 공지 목록은 분리되어 있어 기존(PC) 파서에 위임하는 편이 안전
     const { scrapeBoardPage } = require('./pc');
     return scrapeBoardPage(page, galleryId, { boardType, id, subject, nickname, ip });
   }
@@ -24,13 +26,13 @@ async function scrapeMobileBoardPage(page, galleryId, options = {}) {
       }
     });
     const $ = cheerio.load(html);
-    const posts = [];
+    const posts: any[] = [];
 
     $('ul.gall-detail-lst > li').each((_, el) => {
       const $el = $(el);
       if ($el.find('.pwlink').length || $el.find('.power-lst').length) return;
 
-      const TYPE = {
+      const TYPE: Record<string, string> = {
         'sp-lst-txt': 'text',
         'sp-lst-img': 'picture',
         'sp-lst-recoimg': 'recommended',
@@ -40,7 +42,7 @@ async function scrapeMobileBoardPage(page, galleryId, options = {}) {
       const href = $el.find('a').attr('href') || '';
       const idMatch = href.match(/\/board\/[^/]+\/(\d+)/);
 
-      const nickname = $el.find('.blockInfo').attr('data-name') || '';
+      const nicknameAttr = $el.find('.blockInfo').attr('data-name') || '';
       const dataInfo = $el.find('.blockInfo').attr('data-info') || '';
 
       const rawDate = $el.find('.ginfo > li:nth-child(3)').text().trim();
@@ -54,7 +56,7 @@ async function scrapeMobileBoardPage(page, galleryId, options = {}) {
       }
 
       const klass = ($el.find('.subject-add .sp-lst').attr('class') || '').split(' ');
-      const key = klass.find(cls => cls.startsWith('sp-lst-'));
+      const key = klass.find(cls => cls.startsWith('sp-lst-')) || '';
 
       const post = {
         id: idMatch ? idMatch[1] : '',
@@ -63,7 +65,7 @@ async function scrapeMobileBoardPage(page, galleryId, options = {}) {
         title: $el.find('.subjectin').text().trim(),
         link: href,
         author: {
-          nickname,
+          nickname: nicknameAttr,
           userId: (dataInfo.includes('.') ? '' : dataInfo),
           ip: (dataInfo.includes('.') ? dataInfo : '')
         },
@@ -83,11 +85,11 @@ async function scrapeMobileBoardPage(page, galleryId, options = {}) {
     });
 
     return posts;
-  } catch (e) {
+  } catch (e: any) {
+    // eslint-disable-next-line no-console
     console.error(`모바일 게시판 ${page} 수집 오류: ${e.message}`);
     return [];
   }
 }
 
-module.exports = { scrapeMobileBoardPage };
-
+export = { scrapeMobileBoardPage };
