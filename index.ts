@@ -3,28 +3,29 @@ const scraper = require('./src/scraper');
 const { delay, getRandomUserAgent } = require('./src/util');
 const autocomplete = require('./src/autocomplete');
 const searchModule = require('./src/search');
+import type { GetPostListOptions, PostInfo, GetPostOptions, Post, GetPostsOptions } from './src/types';
 
-async function getPostList({ page, galleryId, boardType = 'all' }: { page: number, galleryId: string, boardType?: 'all'|'recommend'|'notice' }) {
+async function getPostList({ page, galleryId, boardType = 'all' }: GetPostListOptions): Promise<PostInfo[]> {
   return scraper.scrapeBoardPage(page, galleryId, { boardType });
 }
 
 // Legacy: PC board list
-async function getPostListLegacy({ page, galleryId, boardType = 'all' }: { page: number, galleryId: string, boardType?: 'all'|'recommend'|'notice' }) {
+async function getPostListLegacy({ page, galleryId, boardType = 'all' }: GetPostListOptions): Promise<PostInfo[]> {
   return scraper.scrapeBoardPageLegacy(page, galleryId, { boardType });
 }
 
 // New default: use mobile post content
-async function getPost({ galleryId, postNo, ...rest }: any) {
+async function getPost({ galleryId, postNo, ...rest }: GetPostOptions): Promise<Post | null> {
   return scraper.getMobilePostContent(galleryId, postNo, rest);
 }
 
 // Legacy PC version retained for compatibility
-async function getPostLegacy({ galleryId, postNo, ...rest }: any) {
+async function getPostLegacy({ galleryId, postNo, ...rest }: GetPostOptions): Promise<Post | null> {
   return scraper.getPostContent(galleryId, postNo, rest);
 }
 
-async function getPosts({ galleryId, postNumbers, delayMs = 100, onProgress, ...rest }: any) {
-  const out: any[] = [];
+async function getPosts({ galleryId, postNumbers, delayMs = 100, onProgress, ...rest }: GetPostsOptions): Promise<Post[]> {
+  const out: Post[] = [];
   for (let i = 0; i < postNumbers.length; i++) {
     let no: any = postNumbers[i];
     if (typeof no !== 'string' && typeof no !== 'number') {
@@ -32,7 +33,7 @@ async function getPosts({ galleryId, postNumbers, delayMs = 100, onProgress, ...
       else { console.warn('Invalid post number entry, skip'); continue; }
     }
     try {
-      const post = await scraper.getPostContent(galleryId, no, rest);
+      const post = await scraper.getMobilePostContent(galleryId, no, rest);
       if (post) out.push(post);
     } catch (e: any) { console.error(`post ${no} error: ${e.message}`); }
     if (typeof onProgress === 'function') onProgress(i + 1, postNumbers.length);
@@ -57,4 +58,3 @@ export = {
   getRandomUserAgent,
   raw: { ...scraper, ...autocomplete, ...searchModule },
 };
-

@@ -3,7 +3,7 @@
   "version": "1.5.2",
   "description": "dcinside 갤러리 크롤링을 위한 Node.js 라이브러리",
   "main": "dist/index.js",
-  "types": "index.d.ts",
+  "types": "dist/index.d.ts",
   "scripts": {
     "prestart": "npm run build",
     "start": "node dist/src/cli/entry.js",
@@ -50,7 +50,6 @@
   },
   "files": [
     "dist/**/*",
-    "index.d.ts",
     "LICENSE"
   ]
 }

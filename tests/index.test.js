@@ -64,10 +64,10 @@ describe('Public API (index.js) - unit (mocked)', () => {
     expect(res).toEqual(fakePost);
   });
 
-  test('getPosts iterates, calls delay, onProgress, and returns posts', async () => {
+  test('getPosts iterates via mobile parser, calls delay, onProgress, and returns posts', async () => {
     const numbers = ['1', { id: 2 }, 'bad', 3];
-    // Configure getPostContent responses
-    getPostContent
+    // Configure mobile getMobilePostContent responses
+    getMobilePostContent
       .mockResolvedValueOnce({ postNo: '1', title: 'P1', author: '', date: '', content: '', comments: { totalCount: 0, items: [] } })
       .mockResolvedValueOnce({ postNo: '2', title: 'P2', author: '', date: '', content: '', comments: { totalCount: 0, items: [] } })
       .mockResolvedValueOnce({ postNo: 'bad', title: 'PB', author: '', date: '', content: '', comments: { totalCount: 0, items: [] } })
@@ -84,10 +84,10 @@ describe('Public API (index.js) - unit (mocked)', () => {
     });
 
     // getPostContent should receive normalized ids: '1', 2, 'bad', 3
-  expect(getPostContent).toHaveBeenNthCalledWith(1, 'g', '1', { extractImages: true, retryCount: 2 });
-  expect(getPostContent).toHaveBeenNthCalledWith(2, 'g', 2, { extractImages: true, retryCount: 2 });
-  expect(getPostContent).toHaveBeenNthCalledWith(3, 'g', 'bad', { extractImages: true, retryCount: 2 });
-  expect(getPostContent).toHaveBeenNthCalledWith(4, 'g', 3, { extractImages: true, retryCount: 2 });
+  expect(getMobilePostContent).toHaveBeenNthCalledWith(1, 'g', '1', { extractImages: true, retryCount: 2 });
+  expect(getMobilePostContent).toHaveBeenNthCalledWith(2, 'g', 2, { extractImages: true, retryCount: 2 });
+  expect(getMobilePostContent).toHaveBeenNthCalledWith(3, 'g', 'bad', { extractImages: true, retryCount: 2 });
+  expect(getMobilePostContent).toHaveBeenNthCalledWith(4, 'g', 3, { extractImages: true, retryCount: 2 });
 
     // delay is called between iterations (n-1 times)
     expect(delay).toHaveBeenCalledTimes(numbers.length - 1);
