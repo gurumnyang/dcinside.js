@@ -1,6 +1,28 @@
+# Node.js dependencies
 /node_modules/
+
+# IDE settings
 /.idea/
+.vscode/
+
+# Build output
+/dist/
 /output/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Dependency lock files
 package-lock.json
+yarn.lock
+
+# Documentation
 AGENTS.md
-dist/
+
+# Environment files
+.env
+.env.*
