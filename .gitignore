@@ -9,6 +9,8 @@
 /dist/
 /output/
 
+/tests/project-diagram.html
+
 # Logs
 *.log
 
