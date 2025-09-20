@@ -1,6 +1,6 @@
 {
   "name": "@gurumnyang/dcinside.js",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "dcinside 갤러리 크롤링을 위한 Node.js 라이브러리",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
