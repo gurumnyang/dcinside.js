@@ -3,6 +3,7 @@ const { getPostContent } = require('./post');
 const { getCommentsForPost } = require('./comments');
 const { extractText, replaceImagesWithPlaceholder, processImages } = require('./html');
 const { getMobilePostContent, parseMobilePostHtml } = require('./mobilePost');
+const { createMobilePost, deleteMobilePost } = require('../../post/mobileWrite');
 
 module.exports = {
   // legacy PC
@@ -14,5 +15,6 @@ module.exports = {
   // mobile
   getMobilePostContent,
   parseMobilePostHtml,
+  createMobilePost,
+  deleteMobilePost,
 };
-

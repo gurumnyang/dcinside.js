@@ -15,4 +15,7 @@ module.exports = {
   processImages: post.processImages,
   // Mobile post-related
   getMobilePostContent: post.getMobilePostContent,
+  parseMobilePostHtml: post.parseMobilePostHtml,
+  createMobilePost: post.createMobilePost,
+  deleteMobilePost: post.deleteMobilePost,
 };

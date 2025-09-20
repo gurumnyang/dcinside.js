@@ -173,3 +173,40 @@ export interface MobileLoginResult {
   preflight?: Record<string, any>;
   loginPageHtml?: string;
 }
+
+export interface MobileCreatePostOptions {
+  galleryId: string;
+  subject: string;
+  content: string;
+  headText?: string | number;
+  nickname?: string;
+  password?: string;
+  useGallNickname?: boolean;
+  jar?: CookieJar;
+  userAgent?: string;
+  extraFields?: Record<string, string | undefined>;
+}
+
+export interface MobileCreatePostResult {
+  success: boolean;
+  postId?: string;
+  redirectUrl?: string;
+  message?: string;
+  finalHtml?: string;
+  responseStatus: number;
+}
+
+export interface MobileDeletePostOptions {
+  galleryId: string;
+  postId: string | number;
+  jar?: CookieJar;
+  password?: string;
+  userAgent?: string;
+}
+
+export interface MobileDeletePostResult {
+  success: boolean;
+  message?: string;
+  finalHtml?: string;
+  responseStatus: number;
+}

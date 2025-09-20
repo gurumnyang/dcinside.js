@@ -12,6 +12,10 @@ import type {
   GetPostsOptions,
   MobileLoginOptions,
   MobileLoginResult,
+  MobileCreatePostOptions,
+  MobileCreatePostResult,
+  MobileDeletePostOptions,
+  MobileDeletePostResult,
 } from './src/types';
 
 async function getPostList({ page, galleryId, boardType = 'all' }: GetPostListOptions): Promise<PostInfo[]> {
@@ -58,6 +62,14 @@ async function mobileLogin(options: MobileLoginOptions): Promise<MobileLoginResu
   return auth.mobileLogin(options);
 }
 
+async function createPost(options: MobileCreatePostOptions): Promise<MobileCreatePostResult> {
+  return scraper.createMobilePost(options);
+}
+
+async function deletePost(options: MobileDeletePostOptions): Promise<MobileDeletePostResult> {
+  return scraper.deleteMobilePost(options);
+}
+
 export = {
   getPostList,
   getPost,
@@ -67,6 +79,8 @@ export = {
   getAutocomplete,
   search,
   mobileLogin,
+  createPost,
+  deletePost,
   getPostNumbers: getPostList,
   delay,
   getRandomUserAgent,

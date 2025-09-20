@@ -30,6 +30,8 @@ yarn add @gurumnyang/dcinside.js
 - 게시글 내의 이미지 URL 추출
 - 모든 댓글 페이지 자동 수집
 - 통합검색 결과 수집(검색어 기반)
+- 모바일 로그인 및 인증 쿠키 수집
+- 모바일 글쓰기 / 게시글 삭제 자동화
 - TypeScript 타입 정의 지원
 
 
@@ -52,9 +54,6 @@ const dc = require('@gurumnyang/dcinside.js');
 
   console.log(list.length, post?.title, search.posts.length);
 })();
-}
-
-example();
 ```
 
 레거시(PC) 목록 파서는 다음과 같이 호출할 수 있습니다.
@@ -88,9 +87,46 @@ const listPc = await dcCrawler.getPostListLegacy({ page: 1, galleryId: 'programm
   date: '2025.08.11 10:00:00',
   link: 'https://gall.dcinside.com/mgallery/board/view/?id=chatgpt&no=1111'
 }
+```
 
 
-example();
+### 모바일 로그인 & 글쓰기 예시
+
+모바일 로그인 세션을 확보하면 쿠키를 그대로 재사용해 글쓰기/삭제에 활용할 수 있습니다(PC 미지원)
+
+캡차에 걸릴 경우 success:false를 반환합니다
+
+```javascript
+const dc = require('@gurumnyang/dcinside.js');
+
+(async () => {
+  const login = await dc.mobileLogin({ code: process.env.DC_ID, password: process.env.DC_PW });
+  if (!login.success) {
+    throw new Error(`로그인 실패: ${login.reason}`);
+  }
+
+  const write = await dc.createMobilePost({
+    galleryId: 'dragonlake',
+    subject: '테스트 제목',
+    content: '테스트 본문입니다.',
+    jar: login.jar, // 로그인 시 얻은 쿠키를 그대로 사용
+  });
+
+  if (!write.success) {
+    console.log(write.message || '글쓰기 실패');
+    return;
+  }
+
+  console.log('등록된 게시글 번호:', write.postId, '이동 URL:', write.redirectUrl);
+
+  const remove = await dc.deleteMobilePost({
+    galleryId: 'dragonlake',
+    postId: write.postId,
+    jar: login.jar,
+  });
+
+  console.log('삭제 성공 여부:', remove.success, '메시지:', remove.message);
+})();
 ```
 
 
@@ -317,6 +353,62 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 
 ---
 
+#### `mobileLogin(options)`
+
+모바일 로그인 페이지를 통해 인증 쿠키를 획득합니다.
+
+**매개변수:**
+- `options` (MobileLoginOptions)
+  - `code` (문자열): 디시인사이드 식별 코드(ID)
+  - `password` (문자열): 비밀번호
+  - `keepLoggedIn` (불리언, 선택): 자동 로그인 여부 (기본값: `true`)
+  - `userAgent` (문자열, 선택): 커스텀 User-Agent
+  - `jar` (CookieJar, 선택): 외부에서 생성한 쿠키 저장소를 재사용할 때 전달
+
+**반환값:**
+- `Promise<MobileLoginResult>`: 성공 여부, 쿠키 목록, `CookieJar`, 리다이렉트 정보 등을 포함한 객체
+
+---
+
+#### `createMobilePost(options)`
+
+모바일 글쓰기 폼을 사용해 게시글을 등록합니다.
+
+**매개변수:**
+- `options` (MobileCreatePostOptions)
+  - `galleryId` (문자열): 갤러리 ID (필수)
+  - `subject` (문자열): 말머리/제목 (필수)
+  - `content` (문자열): 본문 (필수)
+  - `headText` (문자열 | 숫자, 선택): 말머리 코드
+  - `nickname` (문자열, 선택): 비로그인 글쓰기용 닉네임
+  - `password` (문자열, 선택): 비로그인 글쓰기용 비밀번호
+  - `useGallNickname` (불리언, 선택): 갤러리 닉네임 사용 여부
+  - `jar` (CookieJar, 선택): 로그인으로 확보한 쿠키를 전달할 때 사용
+  - `userAgent` (문자열, 선택): 커스텀 User-Agent
+  - `extraFields` (객체, 선택): 추가 폼 필드 강제 입력
+
+**반환값:**
+- `Promise<MobileCreatePostResult>`: 성공 여부, 게시글 번호, 리다이렉트 URL, 서버 메시지 등을 담은 객체
+
+---
+
+#### `deleteMobilePost(options)`
+
+모바일 게시글 삭제 엔드포인트를 호출합니다.
+
+**매개변수:**
+- `options` (MobileDeletePostOptions)
+  - `galleryId` (문자열): 갤러리 ID (필수)
+  - `postId` (문자열 | 숫자): 삭제할 게시글 번호 (필수)
+  - `jar` (CookieJar, 선택): 로그인 쿠키가 담긴 저장소
+  - `password` (문자열, 선택): 비로그인 삭제 시 사용하는 비밀번호
+  - `userAgent` (문자열, 선택): 커스텀 User-Agent
+
+**반환값:**
+- `Promise<MobileDeletePostResult>`: 성공 여부와 서버 메시지를 담은 객체
+
+---
+
 ### 유틸리티 함수
 
 #### `delay(ms)`
@@ -360,8 +452,9 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 - [x] 게시글 이미지 URL 추출
 - [x] 검색 기능 지원
 - [ ] 이미지 다운로드 기능
-- [ ] 로그인/로그아웃
-- [ ] 게시글 작성/수정/삭제
+- [x] 모바일 로그인/쿠키 수집
+- [x] 모바일 게시글 작성/삭제
+- [ ] 게시글 수정
 - [ ] 댓글 작성
 - [ ] 댓글 삭제
 - [ ] 추천/비추천

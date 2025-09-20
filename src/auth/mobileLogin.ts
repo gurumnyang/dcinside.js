@@ -51,10 +51,12 @@ interface LoginPageExtract {
   html: string;
 }
 
+// tough-cookie
 const getCookiesAsync = async (jar: CookieJar, url: string): Promise<Cookie[]> => {
   return (await jar.getCookies(url)) as Cookie[];
 };
 
+// tough-cookie 정규화
 const toCookieInfo = (cookie: Cookie): MobileLoginCookie => {
   let expires: string | undefined;
   const rawExpires: unknown = (cookie as any).expires;
@@ -75,6 +77,7 @@ const toCookieInfo = (cookie: Cookie): MobileLoginCookie => {
   };
 };
 
+// 상대 경로 => 절대 경로 변환
 const resolveLocation = (fromUrl: string, location: string): string => {
   try {
     return new URL(location, fromUrl).toString();
@@ -83,6 +86,7 @@ const resolveLocation = (fromUrl: string, location: string): string => {
   }
 };
 
+// 모바일 전용 axios 인스턴스
 const createMobileAxios = (jar: CookieJar, userAgent?: string): AxiosInstance => {
   const headersUA = userAgent || DEFAULT_MOBILE_UA;
   return wrapper(axios.create({
@@ -97,6 +101,7 @@ const createMobileAxios = (jar: CookieJar, userAgent?: string): AxiosInstance =>
   } as AxiosRequestConfig));
 };
 
+// CSRF 토큰, conKey 등 추출
 const extractLoginTokens = (html: string, fallbackReturnUrl: string): LoginPageExtract => {
   const $ = cheerio.load(html);
   const csrfToken = $('meta[name="csrf-token"]').attr('content') || '';
@@ -119,6 +124,7 @@ const extractLoginTokens = (html: string, fallbackReturnUrl: string): LoginPageE
   };
 };
 
+// 최초 로그인 페이지 요청
 const fetchLoginPage = async (
   client: AxiosInstance,
   returnUrl: string,
@@ -134,6 +140,7 @@ const fetchLoginPage = async (
   return extractLoginTokens(response.data as string, returnUrl);
 };
 
+// conKey가 유효성 검사
 const preflightAccessCheck = async (
   client: AxiosInstance,
   tokens: MobileLoginTokens,
@@ -158,6 +165,7 @@ const preflightAccessCheck = async (
   return (typeof response.data === 'object' && response.data) || {};
 };
 
+// 실패시 오류 메시지 추출
 const extractFailureMessage = (html: string): string | undefined => {
   if (!html) return undefined;
   try {
@@ -185,6 +193,7 @@ const sanitizeHeaders = (headers: Record<string, any> = {}) => {
   return out;
 };
 
+// sec-fetch-site 값을 추론
 const resolveSecFetchSite = (fromUrl: string, toUrl: string): 'same-origin' | 'same-site' | 'cross-site' => {
   try {
     const base = new URL(fromUrl);
@@ -203,6 +212,7 @@ const resolveSecFetchSite = (fromUrl: string, toUrl: string): 'same-origin' | 's
   return 'cross-site';
 };
 
+// 307 추적
 const followRedirectChain = async (
   client: AxiosInstance,
   initialResponse: AxiosResponse,
@@ -221,6 +231,7 @@ const followRedirectChain = async (
       throw new Error('로그인 처리 중 리다이렉트가 과도하게 발생했습니다.');
     }
 
+    // 서버가 내려준 Location 값을 절대 URL로 만들고, 직전에 보냈던 요청 정보를 꺼낸다.
     const absoluteUrl = resolveLocation(currentUrl, location);
     const prevConfig: AxiosRequestConfig = currentResponse.config || {};
     const method = (prevConfig.method || 'get').toString().toLowerCase();
@@ -238,15 +249,18 @@ const followRedirectChain = async (
       referer,
     });
 
+    // 브라우저는 리다이렉트 단계마다 sec-fetch-site 값을 재계산하므로 동일하게 맞춰준다.
     headers['sec-fetch-site'] = resolveSecFetchSite(currentUrl, absoluteUrl);
 
     if (shouldRepeatPost) {
+      // 307/308 응답이면 body를 그대로 유지한 채 POST를 재전송한다.
       currentResponse = await client.post(absoluteUrl, prevConfig.data, {
         headers,
         validateStatus: status => status >= 200 && status < 400,
         responseType: 'text',
       });
     } else {
+      // 그 외의 리다이렉트는 GET으로 전환해서 최종 페이지를 받는다.
       currentResponse = await client.get(absoluteUrl, {
         headers,
         validateStatus: status => status >= 200 && status < 400,
@@ -254,6 +268,7 @@ const followRedirectChain = async (
       });
     }
 
+    // 다음 루프에서 사용할 현재 URL과 리다이렉트 횟수를 갱신한다.
     currentUrl = absoluteUrl;
     redirects += 1;
   }
@@ -275,6 +290,7 @@ const gatherCookies = async (jar: CookieJar): Promise<MobileLoginCookie[]> => {
   const seen = new Map<string, MobileLoginCookie>();
 
   for (const url of targets) {
+    // 각 도메인별로 저장된 쿠키를 읽어와 중복 없이 누적한다.
     const cookies = await getCookiesAsync(jar, url);
     for (const cookie of cookies) {
       const key = `${cookie.domain}|${cookie.path}|${cookie.key}`;
@@ -289,10 +305,34 @@ const gatherCookies = async (jar: CookieJar): Promise<MobileLoginCookie[]> => {
 
 const buildCookieHeader = async (jar: CookieJar, url: string): Promise<string> => {
   const cookies = await getCookiesAsync(jar, url);
+  // axios 등 다른 클라이언트에 그대로 붙일 수 있는 문자열 형태로 변환한다.
   return cookies.map(c => `${c.key}=${c.value}`).join('; ');
 };
 
+// 실제 로그인 처리
+// MAIN
 export async function mobileLogin(options: MobileLoginOptions): Promise<MobileLoginResult> {
+
+
+  /*
+  모바일 로그인 절차.(참고용)
+  1. 로그인 페이지 요청 (GET /login)
+      - CSRF 토큰, conKey, r_url 등 추출
+      - Set-Cookie로 세션 쿠키 수신
+  2. 사전 검증 요청 (POST /login/access)
+      - conKey, code(식별 코드) 전달
+      - Block_key(추가 인증 키) 수신 가능
+  3. 실제 로그인 요청 (POST /login)
+      - code, password, conKey, r_url, _token(폼 토큰) 전달
+      - 로그인 성공시 302 리다이렉트 수신
+      - 로그인 실패시 200 응답과 함께 오류 메시지 포함된 HTML 수신
+      - 또는 307 sso 리다이렉트 수신
+      - Set-Cookie로 인증 쿠키 수신
+  4. 리다이렉트 추적 
+      - 최종적으로 인증 쿠키가 설정된 상태로 returnUrl 도메인에 접근
+      - 최종 도달 URL과 상태 코드 기록
+  */
+
   const {
     code,
     password,
