@@ -185,6 +185,24 @@ const sanitizeHeaders = (headers: Record<string, any> = {}) => {
   return out;
 };
 
+const resolveSecFetchSite = (fromUrl: string, toUrl: string): 'same-origin' | 'same-site' | 'cross-site' => {
+  try {
+    const base = new URL(fromUrl);
+    const target = new URL(toUrl, fromUrl);
+    if (base.origin === target.origin) {
+      return 'same-origin';
+    }
+    const baseDomain = base.hostname.split('.').slice(-2).join('.');
+    const targetDomain = target.hostname.split('.').slice(-2).join('.');
+    if (baseDomain && baseDomain === targetDomain) {
+      return 'same-site';
+    }
+  } catch (_) {
+    // ignore URL parsing failures and use fallback
+  }
+  return 'cross-site';
+};
+
 const followRedirectChain = async (
   client: AxiosInstance,
   initialResponse: AxiosResponse,
@@ -193,6 +211,8 @@ const followRedirectChain = async (
   let currentResponse = initialResponse;
   let currentUrl = currentResponse.config?.url ? currentResponse.config.url : LOGIN_URL;
   let redirects = 0;
+  const initialHeaders = (currentResponse.config?.headers || {}) as Record<string, any>;
+  const initialReferer = initialHeaders.referer || initialHeaders.Referer;
 
   while (currentResponse.status >= 300 && currentResponse.status < 400) {
     const location = currentResponse.headers?.location || currentResponse.headers?.Location;
@@ -206,12 +226,19 @@ const followRedirectChain = async (
     const method = (prevConfig.method || 'get').toString().toLowerCase();
     const repeatMethod = currentResponse.status === 307 || currentResponse.status === 308;
     const shouldRepeatPost = repeatMethod && method === 'post';
+    const prevHeaders = ((prevConfig.headers as any) || {}) as Record<string, any>;
+    const referer = prevHeaders.referer || prevHeaders.Referer || initialReferer || currentUrl;
+    const normalizedPrevHeaders = { ...prevHeaders };
+    delete normalizedPrevHeaders.referer;
+    delete normalizedPrevHeaders.Referer;
     const headers = sanitizeHeaders({
       ...MOBILE_HTML_HEADERS,
-      ...(shouldRepeatPost ? (prevConfig.headers as any) : {}),
+      ...(shouldRepeatPost ? normalizedPrevHeaders : {}),
       ...baseHeaders,
-      referer: currentUrl,
+      referer,
     });
+
+    headers['sec-fetch-site'] = resolveSecFetchSite(currentUrl, absoluteUrl);
 
     if (shouldRepeatPost) {
       currentResponse = await client.post(absoluteUrl, prevConfig.data, {
