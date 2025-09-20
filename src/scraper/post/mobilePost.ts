@@ -90,6 +90,8 @@ function parseMobilePostHtml(html: string, options: { extractImages?: boolean, i
   const totalHidden = $('#reple_totalCnt').attr('value');
   if (totalHidden) totalCount = parseInt(totalHidden, 10) || 0;
   const items: any[] = [];
+  let currentParentId = '0';
+
   $('.all-comment-lst > li').each((_, li) => {
     const $li = $(li);
     const id = String($li.attr('no') || '').trim();
@@ -102,8 +104,12 @@ function parseMobilePostHtml(html: string, options: { extractImages?: boolean, i
     memoEl.find('br').replaceWith('\n');
     const memo = memoEl.text().replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim();
     if (!id && !nameRaw && !memo) return;
+    const klass = $li.attr('class') || '';
+    const isReply = /\bcomment-add\b/.test(klass);
+    const parent = isReply ? (currentParentId || '0') : '0';
+    if (!isReply) currentParentId = id || currentParentId;
     items.push({
-      parent: '0',
+      parent,
       id,
       author: { userId, nickname: nameRaw, ip },
       regDate,

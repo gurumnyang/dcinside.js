@@ -14,6 +14,8 @@ async function run() {
     return;
   }
 
+  console.log(post.comments);
+
   console.log('제목:', post.title);
   console.log('작성자:', post.author);
   console.log('날짜:', post.date);
