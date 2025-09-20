@@ -3,7 +3,16 @@ const scraper = require('./src/scraper');
 const { delay, getRandomUserAgent } = require('./src/util');
 const autocomplete = require('./src/autocomplete');
 const searchModule = require('./src/search');
-import type { GetPostListOptions, PostInfo, GetPostOptions, Post, GetPostsOptions } from './src/types';
+const auth = require('./src/auth');
+import type {
+  GetPostListOptions,
+  PostInfo,
+  GetPostOptions,
+  Post,
+  GetPostsOptions,
+  MobileLoginOptions,
+  MobileLoginResult,
+} from './src/types';
 
 async function getPostList({ page, galleryId, boardType = 'all' }: GetPostListOptions): Promise<PostInfo[]> {
   return scraper.scrapeBoardPage(page, galleryId, { boardType });
@@ -45,6 +54,10 @@ async function getPosts({ galleryId, postNumbers, delayMs = 100, onProgress, ...
 async function getAutocomplete(query: string) { return autocomplete.getAutocomplete(query); }
 async function search(query: string, options: any = {}) { return searchModule.search(query, options); }
 
+async function mobileLogin(options: MobileLoginOptions): Promise<MobileLoginResult> {
+  return auth.mobileLogin(options);
+}
+
 export = {
   getPostList,
   getPost,
@@ -53,8 +66,9 @@ export = {
   getPosts,
   getAutocomplete,
   search,
+  mobileLogin,
   getPostNumbers: getPostList,
   delay,
   getRandomUserAgent,
-  raw: { ...scraper, ...autocomplete, ...searchModule },
+  raw: { ...scraper, ...autocomplete, ...searchModule, ...auth },
 };

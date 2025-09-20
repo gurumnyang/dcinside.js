@@ -1,3 +1,5 @@
+import type { CookieJar } from 'tough-cookie';
+
 // Core public types for dcinside.js
 
 export interface AuthorInfo {
@@ -131,3 +133,43 @@ export interface SearchResult {
   posts: SearchPost[];
 }
 
+export interface MobileLoginCookie {
+  key: string;
+  value: string;
+  domain: string;
+  path: string;
+  httpOnly?: boolean;
+  secure?: boolean;
+  expires?: string;
+}
+
+export interface MobileLoginTokens {
+  csrfToken: string;
+  conKey: string;
+  formToken?: string;
+  returnUrl: string;
+}
+
+export interface MobileLoginOptions {
+  code: string;
+  password: string;
+  keepLoggedIn?: boolean;
+  returnUrl?: string;
+  userAgent?: string;
+  jar?: CookieJar;
+}
+
+export interface MobileLoginResult {
+  success: boolean;
+  reason?: string;
+  tokens: MobileLoginTokens;
+  jar: CookieJar;
+  cookies: MobileLoginCookie[];
+  cookieHeader: string;
+  redirectCount: number;
+  finalUrl: string;
+  finalStatus: number;
+  finalHtml?: string;
+  preflight?: Record<string, any>;
+  loginPageHtml?: string;
+}
