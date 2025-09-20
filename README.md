@@ -32,6 +32,7 @@ yarn add @gurumnyang/dcinside.js
 - 통합검색 결과 수집(검색어 기반)
 - 모바일 로그인 및 인증 쿠키 수집
 - 모바일 글쓰기 / 게시글 삭제 자동화
+- 모바일 댓글 삭제 자동화
 - TypeScript 타입 정의 지원
 
 
@@ -128,6 +129,8 @@ const dc = require('@gurumnyang/dcinside.js');
   console.log('삭제 성공 여부:', remove.success, '메시지:', remove.message);
 })();
 ```
+
+> 댓글을 제거하려면 `await dc.deleteComment({ galleryId: 'dragonlake', postId: 글번호, commentId: 댓글번호, jar: login.jar });` 형태로 호출하면 됩니다.
 
 
 ## 터미널 브라우저(TUI)
@@ -409,6 +412,24 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 
 ---
 
+#### `deleteMobileComment(options)`
+
+모바일 댓글 삭제 엔드포인트를 호출합니다.
+
+**매개변수:**
+- `options` (MobileDeleteCommentOptions)
+  - `galleryId` (문자열): 갤러리 ID (필수)
+  - `postId` (문자열 | 숫자): 댓글이 달린 게시글 번호 (필수)
+  - `commentId` (문자열 | 숫자): 삭제할 댓글 번호 (필수)
+  - `jar` (CookieJar, 선택): 로그인 쿠키가 담긴 저장소
+  - `password` (문자열, 선택): 비로그인 댓글 삭제 시 사용하는 비밀번호
+  - `userAgent` (문자열, 선택): 커스텀 User-Agent
+
+**반환값:**
+- `Promise<MobileDeleteCommentResult>`: 성공 여부와 서버 메시지를 담은 객체
+
+---
+
 ### 유틸리티 함수
 
 #### `delay(ms)`
@@ -454,9 +475,9 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 - [ ] 이미지 다운로드 기능
 - [x] 모바일 로그인/쿠키 수집
 - [x] 모바일 게시글 작성/삭제
+- [x] 모바일 댓글 삭제
 - [ ] 게시글 수정
 - [ ] 댓글 작성
-- [ ] 댓글 삭제
 - [ ] 추천/비추천
 
 ## 주의사항

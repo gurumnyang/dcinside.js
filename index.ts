@@ -16,6 +16,8 @@ import type {
   MobileCreatePostResult,
   MobileDeletePostOptions,
   MobileDeletePostResult,
+  MobileDeleteCommentOptions,
+  MobileDeleteCommentResult,
 } from './src/types';
 
 async function getPostList({ page, galleryId, boardType = 'all' }: GetPostListOptions): Promise<PostInfo[]> {
@@ -70,6 +72,10 @@ async function deletePost(options: MobileDeletePostOptions): Promise<MobileDelet
   return scraper.deleteMobilePost(options);
 }
 
+async function deleteComment(options: MobileDeleteCommentOptions): Promise<MobileDeleteCommentResult> {
+  return scraper.deleteMobileComment(options);
+}
+
 export = {
   getPostList,
   getPost,
@@ -81,6 +87,7 @@ export = {
   mobileLogin,
   createPost,
   deletePost,
+  deleteComment,
   getPostNumbers: getPostList,
   delay,
   getRandomUserAgent,

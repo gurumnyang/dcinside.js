@@ -18,4 +18,5 @@ module.exports = {
   parseMobilePostHtml: post.parseMobilePostHtml,
   createMobilePost: post.createMobilePost,
   deleteMobilePost: post.deleteMobilePost,
+  deleteMobileComment: post.deleteMobileComment,
 };

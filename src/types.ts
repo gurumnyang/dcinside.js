@@ -210,3 +210,19 @@ export interface MobileDeletePostResult {
   finalHtml?: string;
   responseStatus: number;
 }
+
+export interface MobileDeleteCommentOptions {
+  galleryId: string;
+  postId: string | number;
+  commentId: string | number;
+  jar?: CookieJar;
+  password?: string;
+  userAgent?: string;
+}
+
+export interface MobileDeleteCommentResult {
+  success: boolean;
+  message?: string;
+  finalHtml?: string;
+  responseStatus: number;
+}

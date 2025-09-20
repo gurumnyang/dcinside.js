@@ -1,0 +1,2 @@
+export { deleteMobileComment } from './mobileComment';
+
