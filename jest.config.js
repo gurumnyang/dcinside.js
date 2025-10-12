@@ -3,8 +3,7 @@ module.exports = {
   testEnvironment: 'node',
   moduleFileExtensions: ['ts', 'js', 'json'],
   transform: {
-    '^.+\\.(ts)$': 'ts-jest',
+    '^.+\\.(ts|js)$': ['ts-jest', { tsconfig: { allowJs: true } }],
   },
-  // Keep defaults for JS; only TS files are transformed.
+  transformIgnorePatterns: ['/node_modules/(?!(axios-cookiejar-support|http-cookie-agent)/)'],
 };
-
