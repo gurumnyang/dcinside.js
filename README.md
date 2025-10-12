@@ -32,6 +32,7 @@ yarn add @gurumnyang/dcinside.js
 - 통합검색 결과 수집(검색어 기반)
 - 모바일 로그인 및 인증 쿠키 수집
 - 모바일 글쓰기 / 게시글 삭제 자동화
+- 모바일 댓글 작성 자동화
 - 모바일 댓글 삭제 자동화
 - TypeScript 타입 정의 지원
 
@@ -131,6 +132,7 @@ const dc = require('@gurumnyang/dcinside.js');
 ```
 
 > 댓글을 제거하려면 `await dc.deleteComment({ galleryId: 'dragonlake', postId: 글번호, commentId: 댓글번호, jar: login.jar });` 형태로 호출하면 됩니다.
+> 댓글을 작성하려면 `await dc.createComment({ galleryId: 'dragonlake', postId: 글번호, content: '댓글 내용', jar: login.jar });` 형태로 호출하면 됩니다. 게스트는 `nickname`, `password`, `captchaCode`를 함께 전달하세요.
 
 
 ## 터미널 브라우저(TUI)
@@ -477,7 +479,7 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 - [x] 모바일 게시글 작성/삭제
 - [x] 모바일 댓글 삭제
 - [ ] 게시글 수정
-- [ ] 댓글 작성
+- [x] 댓글 작성
 - [ ] 추천/비추천
 
 ## 주의사항

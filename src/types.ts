@@ -211,6 +211,30 @@ export interface MobileDeletePostResult {
   responseStatus: number;
 }
 
+export interface MobileCreateCommentOptions {
+  galleryId: string;
+  postId: string | number;
+  content: string;
+  jar?: CookieJar;
+  nickname?: string;
+  password?: string;
+  captchaCode?: string;
+  captchaKey?: string;
+  useGallNickname?: boolean;
+  userAgent?: string;
+}
+
+export interface MobileCreateCommentResult {
+  success: boolean;
+  commentId?: string;
+  message?: string;
+  responseStatus: number;
+  captchaKey?: string;
+  captchaImageUrl?: string;
+  finalHtml?: string;
+  raw?: any;
+}
+
 export interface MobileDeleteCommentOptions {
   galleryId: string;
   postId: string | number;

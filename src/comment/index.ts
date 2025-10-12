@@ -1,2 +1,1 @@
-export { deleteMobileComment } from './mobileComment';
-
+export { createMobileComment, deleteMobileComment } from './mobileComment';

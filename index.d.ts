@@ -1,3 +1,5 @@
+import type { CookieJar } from 'tough-cookie';
+
 declare module "@gurumnyang/dcinside.js" {
   /**
    * 게시글 데이터 타입
@@ -118,6 +120,32 @@ declare module "@gurumnyang/dcinside.js" {
     includeSource?: boolean;
   }
 
+  /** 모바일 댓글 작성 옵션 */
+  export interface MobileCreateCommentOptions {
+    galleryId: string;
+    postId: string | number;
+    content: string;
+    jar?: CookieJar;
+    nickname?: string;
+    password?: string;
+    captchaCode?: string;
+    captchaKey?: string;
+    useGallNickname?: boolean;
+    userAgent?: string;
+  }
+
+  /** 모바일 댓글 작성 결과 */
+  export interface MobileCreateCommentResult {
+    success: boolean;
+    commentId?: string;
+    message?: string;
+    responseStatus: number;
+    captchaKey?: string;
+    captchaImageUrl?: string;
+    finalHtml?: string;
+    raw?: any;
+  }
+
   /** 자동완성 결과 갤러리 항목 */
   export interface AutocompleteGalleryItem {
     name: string;
@@ -232,6 +260,11 @@ declare module "@gurumnyang/dcinside.js" {
    * 무작위 User-Agent 문자열을 반환합니다.
    */
   export function getRandomUserAgent(): string;
+
+  /**
+   * 모바일 댓글 작성 엔드포인트를 호출합니다.
+   */
+  export function createComment(options: MobileCreateCommentOptions): Promise<MobileCreateCommentResult>;
   
   /**
    * @deprecated getPostList를 사용하세요. PostInfo[]를 반환합니다.

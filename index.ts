@@ -16,6 +16,8 @@ import type {
   MobileCreatePostResult,
   MobileDeletePostOptions,
   MobileDeletePostResult,
+  MobileCreateCommentOptions,
+  MobileCreateCommentResult,
   MobileDeleteCommentOptions,
   MobileDeleteCommentResult,
 } from './src/types';
@@ -72,6 +74,10 @@ async function deletePost(options: MobileDeletePostOptions): Promise<MobileDelet
   return scraper.deleteMobilePost(options);
 }
 
+async function createComment(options: MobileCreateCommentOptions): Promise<MobileCreateCommentResult> {
+  return scraper.createMobileComment(options);
+}
+
 async function deleteComment(options: MobileDeleteCommentOptions): Promise<MobileDeleteCommentResult> {
   return scraper.deleteMobileComment(options);
 }
@@ -86,6 +92,7 @@ export = {
   search,
   mobileLogin,
   createPost,
+  createComment,
   deletePost,
   deleteComment,
   getPostNumbers: getPostList,
