@@ -5,6 +5,7 @@ const { extractText, replaceImagesWithPlaceholder, processImages } = require('./
 const { getMobilePostContent, parseMobilePostHtml } = require('./mobilePost');
 const { createMobilePost, deleteMobilePost } = require('../../post/mobileWrite');
 const { createMobileComment, deleteMobileComment } = require('../../comment/mobileComment');
+const { recommendBestPost } = require('../../post/bestRecommend');
 
 module.exports = {
   // legacy PC
@@ -20,4 +21,5 @@ module.exports = {
   deleteMobilePost,
   createMobileComment,
   deleteMobileComment,
+  recommendBestPost,
 };

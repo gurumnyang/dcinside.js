@@ -1,6 +1,8 @@
 import type { CookieJar } from 'tough-cookie';
+import type { AxiosProxyConfig } from 'axios';
 
 declare module "@gurumnyang/dcinside.js" {
+  export type ProxyConfig = false | AxiosProxyConfig;
   /**
    * 게시글 데이터 타입
    */
@@ -146,6 +148,21 @@ declare module "@gurumnyang/dcinside.js" {
     raw?: any;
   }
 
+  export interface BestRecommendOptions {
+    galleryId: string;
+    postId: string | number;
+    jar?: CookieJar;
+    userAgent?: string;
+    proxy?: ProxyConfig;
+  }
+
+  export interface BestRecommendResult {
+    success: boolean;
+    message?: string;
+    responseStatus: number;
+    raw?: any;
+  }
+
   /** 자동완성 결과 갤러리 항목 */
   export interface AutocompleteGalleryItem {
     name: string;
@@ -265,6 +282,11 @@ declare module "@gurumnyang/dcinside.js" {
    * 모바일 댓글 작성 엔드포인트를 호출합니다.
    */
   export function createComment(options: MobileCreateCommentOptions): Promise<MobileCreateCommentResult>;
+
+  /**
+   * 실시간 베스트 추천을 수행합니다.
+   */
+  export function recommendBest(options: BestRecommendOptions): Promise<BestRecommendResult>;
   
   /**
    * @deprecated getPostList를 사용하세요. PostInfo[]를 반환합니다.
@@ -370,5 +392,9 @@ declare module "@gurumnyang/dcinside.js" {
     getAutocomplete: (
       query: string
     ) => Promise<AutocompleteResponse>;
+
+    recommendBestPost: (
+      options: BestRecommendOptions
+    ) => Promise<BestRecommendResult>;
   };
 }

@@ -20,6 +20,8 @@ import type {
   MobileCreateCommentResult,
   MobileDeleteCommentOptions,
   MobileDeleteCommentResult,
+  BestRecommendOptions,
+  BestRecommendResult,
 } from './src/types';
 
 async function getPostList({ page, galleryId, boardType = 'all' }: GetPostListOptions): Promise<PostInfo[]> {
@@ -82,6 +84,11 @@ async function deleteComment(options: MobileDeleteCommentOptions): Promise<Mobil
   return scraper.deleteMobileComment(options);
 }
 
+async function recommendBest(options: BestRecommendOptions): Promise<BestRecommendResult> {
+  const { galleryId, postId, ...rest } = options;
+  return scraper.recommendBestPost({ galleryId, postId, ...rest });
+}
+
 export = {
   getPostList,
   getPost,
@@ -95,6 +102,7 @@ export = {
   createComment,
   deletePost,
   deleteComment,
+  recommendBest,
   getPostNumbers: getPostList,
   delay,
   getRandomUserAgent,

@@ -20,4 +20,5 @@ module.exports = {
   deleteMobilePost: post.deleteMobilePost,
   createMobileComment: post.createMobileComment,
   deleteMobileComment: post.deleteMobileComment,
+  recommendBestPost: post.recommendBestPost,
 };
