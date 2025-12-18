@@ -1,28 +1,47 @@
 import * as cheerio from 'cheerio';
+import type { CookieJar } from 'tough-cookie';
 import { getWithRetry } from '../../http';
 
 const MOBILE_BASE_URL = 'https://m.dcinside.com';
 
+function setCookieAsync(jar: CookieJar, cookie: string, url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    jar.setCookie(cookie, url, err => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
 async function scrapeMobileBoardPage(
   page: number,
   galleryId: string,
-  options: { boardType?: 'all' | 'recommend' | 'notice'; id?: string; subject?: string; nickname?: string; ip?: string } = {}
+  options: { boardType?: 'all' | 'recommend' | 'notice'; id?: string; subject?: string; nickname?: string; ip?: string; jar?: CookieJar } = {}
 ): Promise<any[]> {
-  const { boardType = 'all', id, subject, nickname, ip } = options;
+  const { boardType = 'all', id, subject, nickname, ip, jar } = options;
   if (boardType === 'notice') {
     const { scrapeBoardPage } = require('./pc');
-    return scrapeBoardPage(page, galleryId, { boardType, id, subject, nickname, ip });
+    return scrapeBoardPage(page, galleryId, { boardType, id, subject, nickname, ip, jar });
   }
   if (page <= 0) return [];
 
   const qs = boardType === 'recommend' ? `recommend=1&page=${page}` : `page=${page}`;
   const url = `${MOBILE_BASE_URL}/board/${encodeURIComponent(galleryId)}?${qs}`;
 
+  if (jar) {
+    try {
+      await setCookieAsync(jar, 'list_count=100; Path=/; Max-Age=31536000', MOBILE_BASE_URL);
+    } catch (err) {
+      // ignore; list_count cookie is an optimization only
+    }
+  }
+
   try {
     const html = await getWithRetry(url, {
+      ...(jar ? { jar } : {}),
       headers: {
         'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-G973N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Mobile Safari/537.36',
-        'Cookie': 'list_count=100',
+        ...(jar ? {} : { Cookie: 'list_count=100' }),
       }
     });
     const $ = cheerio.load(html);

@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import type { CookieJar } from 'tough-cookie';
 import config = require('../../config');
 import { getWithRetry } from '../../http';
 
@@ -7,16 +8,16 @@ const { BASE_URL } = config as any;
 async function scrapeBoardPage(
   page: number,
   galleryId: string,
-  options: { boardType?: 'all' | 'recommend' | 'notice'; id?: string; subject?: string; nickname?: string; ip?: string } = {}
+  options: { boardType?: 'all' | 'recommend' | 'notice'; id?: string; subject?: string; nickname?: string; ip?: string; jar?: CookieJar } = {}
 ): Promise<any[]> {
-  const { boardType = 'all', id, subject, nickname, ip } = options;
+  const { boardType = 'all', id, subject, nickname, ip, jar } = options;
   if (page <= 0) return [];
 
   const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}` +
     `&list_num=100&search_head=&page=${page}&exception_mode=${boardType}`;
 
   try {
-    const html = await getWithRetry(url);
+    const html = await getWithRetry(url, jar ? { jar } : undefined);
     const $ = cheerio.load(html);
     const posts: any[] = [];
     const types = [
@@ -72,4 +73,3 @@ async function scrapeBoardPage(
 }
 
 export = { scrapeBoardPage };
-

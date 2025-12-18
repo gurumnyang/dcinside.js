@@ -77,6 +77,8 @@ declare module "@gurumnyang/dcinside.js" {
     galleryId: string;
     boardType?: 'all' | 'recommend' | 'notice';
     delayMs?: number;
+    /** Optional cookie jar for authenticated/remembered sessions. */
+    jar?: CookieJar;
   }
 
   /**

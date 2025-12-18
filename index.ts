@@ -22,13 +22,13 @@ import type {
   MobileDeleteCommentResult,
 } from './src/types';
 
-async function getPostList({ page, galleryId, boardType = 'all' }: GetPostListOptions): Promise<PostInfo[]> {
-  return scraper.scrapeBoardPage(page, galleryId, { boardType });
+async function getPostList({ page, galleryId, boardType = 'all', jar }: GetPostListOptions): Promise<PostInfo[]> {
+  return scraper.scrapeBoardPage(page, galleryId, jar ? { boardType, jar } : { boardType });
 }
 
 // Legacy: PC board list
-async function getPostListLegacy({ page, galleryId, boardType = 'all' }: GetPostListOptions): Promise<PostInfo[]> {
-  return scraper.scrapeBoardPageLegacy(page, galleryId, { boardType });
+async function getPostListLegacy({ page, galleryId, boardType = 'all', jar }: GetPostListOptions): Promise<PostInfo[]> {
+  return scraper.scrapeBoardPageLegacy(page, galleryId, jar ? { boardType, jar } : { boardType });
 }
 
 // New default: use mobile post content

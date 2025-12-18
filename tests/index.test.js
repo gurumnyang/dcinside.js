@@ -11,6 +11,7 @@ jest.mock('../src/util', () => ({
   getRandomUserAgent: jest.fn(() => 'Mock-UA'),
 }));
 
+const { CookieJar } = require('tough-cookie');
 const { scrapeBoardPage, getPostContent, getMobilePostContent } = require('../src/scraper');
 const { delay, getRandomUserAgent } = require('../src/util');
 
@@ -44,6 +45,15 @@ describe('Public API (index.js) - unit (mocked)', () => {
 
     expect(scrapeBoardPage).toHaveBeenCalledWith(1, 'g', { boardType: 'all' });
     expect(res).toEqual(fakeList);
+  });
+
+  test('getPostList passes jar through when provided', async () => {
+    scrapeBoardPage.mockResolvedValue([]);
+    const jar = new CookieJar();
+
+    await api.getPostList({ page: 1, galleryId: 'g', boardType: 'all', jar });
+
+    expect(scrapeBoardPage).toHaveBeenCalledWith(1, 'g', { boardType: 'all', jar });
   });
 
     test('getPost delegates to mobile getMobilePostContent with rest options including retryCount', async () => {

@@ -53,6 +53,11 @@ export interface GetPostListOptions {
   galleryId: string;
   boardType?: 'all' | 'recommend' | 'notice';
   delayMs?: number;
+  /**
+   * Optional cookie jar for authenticated/remembered sessions.
+   * When provided, list requests will include cookies stored in the jar.
+   */
+  jar?: CookieJar;
 }
 
 export interface GetPostOptions {

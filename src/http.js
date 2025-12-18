@@ -2,6 +2,7 @@
 // @ts-check
 
 const axios = require('axios');
+const { wrapper } = require('axios-cookiejar-support');
 const { withRetry, createHttpError, getRandomUserAgent } = require('./util');
 const config = require('./config');
 
@@ -20,18 +21,59 @@ const axiosInstance = (/** @type {any} */(axios)).create({
 });
 
 /**
+ * Create a cookie-jar aware axios instance.
+ * NOTE: The jar is NOT included in error metadata to avoid leaking cookies.
+ * @param {import('tough-cookie').CookieJar} jar
+ * @returns {import('axios').AxiosInstance}
+ */
+function createJarAxiosInstance(jar) {
+  // axios-cookiejar-support wires CookieJar <-> request/response headers.
+  // The jar itself is shared (caller owns it), so recreating the axios instance is fine.
+  const client = (/** @type {any} */(axios)).create({
+    timeout: TIMEOUT,
+    headers: DEFAULT_HEADERS,
+    jar,
+    withCredentials: true,
+  });
+  return wrapper(client);
+}
+
+/**
+ * Redact sensitive headers/capabilities from error metadata.
+ * @param {any} options
+ */
+function sanitizeOptionsForError(options) {
+  if (!options || typeof options !== 'object') return options;
+  const out = { ...options };
+  if ('jar' in out) delete out.jar;
+  if (out.headers && typeof out.headers === 'object') {
+    const nextHeaders = { ...out.headers };
+    for (const key of Object.keys(nextHeaders)) {
+      if (!key) continue;
+      const lower = key.toLowerCase();
+      if (lower === 'cookie' || lower === 'authorization') {
+        nextHeaders[key] = '[redacted]';
+      }
+    }
+    out.headers = nextHeaders;
+  }
+  return out;
+}
+
+/**
  * Perform GET with retry/backoff. Optionally overrides headers.
  * @param {string} url
- * @param {import('axios').AxiosRequestConfig} [options] axios options
+ * @param {(import('axios').AxiosRequestConfig & { retryCount?: number, jar?: import('tough-cookie').CookieJar })} [options] axios options
  * @returns {Promise<any>} response.data
  */
 async function getWithRetry(url, options = {}) {
-  const { retryCount, ...axiosConfig } = /** @type {any} */ (options || {});
+  const { retryCount, jar, ...axiosConfig } = /** @type {any} */ (options || {});
   const retryOptions = {
     maxRetries: retryCount || RETRY_ATTEMPTS,
     delayMs: RETRY_DELAY,
     exponentialBackoff: true,
   };
+  const client = jar ? createJarAxiosInstance(jar) : axiosInstance;
 
   try {
     return await withRetry(async () => {
@@ -42,11 +84,11 @@ async function getWithRetry(url, options = {}) {
           'User-Agent': getRandomUserAgent(),
         };
       }
-      return (await axiosInstance.get(url, finalOptions)).data;
+      return (await client.get(url, finalOptions)).data;
     }, retryOptions);
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      throw createHttpError(error, `GET failed: ${url}`, { method: 'GET', options });
+      throw createHttpError(error, `GET failed: ${url}`, { method: 'GET', options: sanitizeOptionsForError(options) });
     }
     throw error;
   }
@@ -56,16 +98,17 @@ async function getWithRetry(url, options = {}) {
  * Perform POST with retry/backoff. Optionally overrides headers.
  * @param {string} url
  * @param {any} data
- * @param {import('axios').AxiosRequestConfig} [options] axios options
+ * @param {(import('axios').AxiosRequestConfig & { retryCount?: number, jar?: import('tough-cookie').CookieJar })} [options] axios options
  * @returns {Promise<any>} response.data
  */
 async function postWithRetry(url, data, options = {}) {
-  const { retryCount, ...axiosConfig } = /** @type {any} */ (options || {});
+  const { retryCount, jar, ...axiosConfig } = /** @type {any} */ (options || {});
   const retryOptions = {
     maxRetries: RETRY_ATTEMPTS,
     delayMs: RETRY_DELAY,
     exponentialBackoff: true,
   };
+  const client = jar ? createJarAxiosInstance(jar) : axiosInstance;
 
   try {
     return await withRetry(async () => {
@@ -76,11 +119,11 @@ async function postWithRetry(url, data, options = {}) {
           'User-Agent': getRandomUserAgent(),
         };
       }
-      return (await axiosInstance.post(url, data, finalOptions)).data;
+      return (await client.post(url, data, finalOptions)).data;
     }, retryOptions);
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      throw createHttpError(error, `POST failed: ${url}`, { method: 'POST', options });
+      throw createHttpError(error, `POST failed: ${url}`, { method: 'POST', options: sanitizeOptionsForError(options) });
     }
     throw error;
   }
