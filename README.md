@@ -30,6 +30,7 @@ yarn add @gurumnyang/dcinside.js
 - 로그인 및 인증 쿠키 수집
 - 게시글 게시, 삭제
 - 댓글 게시, 삭제
+- 실시간 베스트 추천(실베추)
 
 
 ## 사용 방법
@@ -128,6 +129,45 @@ const dc = require('@gurumnyang/dcinside.js');
 
 > 댓글을 제거하려면 `await dc.deleteComment({ galleryId: 'dragonlake', postId: 글번호, commentId: 댓글번호, jar: login.jar });` 형태로 호출하면 됩니다.
 > 댓글을 작성하려면 `await dc.createComment({ galleryId: 'dragonlake', postId: 글번호, content: '댓글 내용', jar: login.jar });` 형태로 호출하면 됩니다. 게스트는 `nickname`, `password`, `captchaCode`를 함께 전달하세요.
+
+### 실시간 베스트 추천(실베추)
+
+실시간 베스트 추천을 수행합니다.
+
+```javascript
+const dc = require('@gurumnyang/dcinside.js');
+
+(async () => {
+  // (선택) 로그인 세션이 있다면 jar을 전달할 수 있습니다.
+  // const login = await dc.mobileLogin({ code: process.env.DC_ID, password: process.env.DC_PW });
+  // const jar = login.success ? login.jar : undefined;
+
+  // (선택) 프록시 사용 예시 (Axios ProxyConfig 형식)
+  const proxy = process.env.HTTP_PROXY
+    ? (() => {
+        const u = new URL(process.env.HTTP_PROXY);
+        return {
+          protocol: u.protocol.replace(':', ''),
+          host: u.hostname,
+          port: u.port ? Number(u.port) : undefined,
+          auth: u.username ? { username: u.username, password: u.password } : undefined,
+        };
+      })()
+    : undefined;
+
+  const result = await dc.recommendBest({
+    galleryId: 'chatgpt',
+    postId: 68960,
+    // jar,
+    userAgent: process.env.DC_UA,
+    proxy,
+  });
+
+  console.log('성공 여부:', result.success);
+  console.log('메시지:', result.message);
+  console.log('HTTP Status:', result.responseStatus);
+})();
+```
 
 
 ## 터미널 브라우저(TUI)
@@ -427,6 +467,27 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 
 ---
 
+#### `recommendBest(options)`
+
+모바일 페이지에서 해당 게시글을 조회해 CSRF 토큰을 얻은 뒤 실시간 베스트 추천(실베추) 엔드포인트로 요청을 전송합니다.
+
+**매개변수:**
+- `options` (BestRecommendOptions)
+  - `galleryId` (문자열): 갤러리 ID (필수)
+  - `postId` (문자열 | 숫자): 추천할 게시글 번호 (필수)
+  - `jar` (CookieJar, 선택): 로그인(세션) 쿠키 저장소
+  - `userAgent` (문자열, 선택): 커스텀 User-Agent
+  - `proxy` (ProxyConfig, 선택): Axios 프록시 설정 객체 또는 `false`
+
+**반환값:**
+- `Promise<BestRecommendResult>`
+  - `success` (불리언): 성공 여부
+  - `message` (문자열, 선택): 서버가 전달한 메시지(예: 이미 추천함 등)
+  - `responseStatus` (숫자): HTTP 상태 코드
+  - `raw` (임의, 선택): 서버 원본 응답 객체
+
+---
+
 ### 유틸리티 함수
 
 #### `delay(ms)`
@@ -476,6 +537,7 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 - [ ] 게시글 수정
 - [x] 댓글 작성
 - [ ] 추천/비추천
+- [x] 실시간 베스트 추천(실베추)
 
 ## 주의사항
 

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosProxyConfig } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import { Cookie, CookieJar } from 'tough-cookie';
 import * as cheerio from 'cheerio';
@@ -28,7 +28,11 @@ export const AJAX_HEADERS = {
   'x-requested-with': 'XMLHttpRequest',
 };
 
-export function createMobileClient(jar: CookieJar, userAgent?: string): AxiosInstance {
+export function createMobileClient(
+  jar: CookieJar,
+  userAgent?: string,
+  proxy?: AxiosProxyConfig | false
+): AxiosInstance {
   const client = axios.create({
     jar,
     withCredentials: true,
@@ -41,6 +45,7 @@ export function createMobileClient(jar: CookieJar, userAgent?: string): AxiosIns
       'sec-ch-ua-platform': '"Android"',
     },
     maxRedirects: 0,
+    proxy,
   });
   return wrapper(client);
 }

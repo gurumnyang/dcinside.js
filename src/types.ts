@@ -1,6 +1,9 @@
 import type { CookieJar } from 'tough-cookie';
+import type { AxiosProxyConfig } from 'axios';
 
 // Core public types for dcinside.js
+
+export type ProxyConfig = false | AxiosProxyConfig;
 
 export interface AuthorInfo {
   nickname: string;
@@ -254,4 +257,19 @@ export interface MobileDeleteCommentResult {
   message?: string;
   finalHtml?: string;
   responseStatus: number;
+}
+
+export interface BestRecommendOptions {
+  galleryId: string;
+  postId: string | number;
+  jar?: CookieJar;
+  userAgent?: string;
+  proxy?: ProxyConfig;
+}
+
+export interface BestRecommendResult {
+  success: boolean;
+  message?: string;
+  responseStatus: number;
+  raw?: any;
 }
