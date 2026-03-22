@@ -3,19 +3,23 @@ import config = require('../../config');
 import { getWithRetry } from '../../http';
 const { extractText, processImages } = require('./html');
 const { getCommentsForPost } = require('./comments');
-import type { Post } from '../../types';
+import type { Post, ProxyConfig } from '../../types';
 
 const { BASE_URL } = config as any;
 
-async function getPostContent(galleryId: string = 'chatgpt', no: string | number, options: { extractImages?: boolean; includeImageSource?: boolean } = {}): Promise<Post | null> {
-  const { extractImages = true, includeImageSource = false } = options;
+async function getPostContent(
+  galleryId: string = 'chatgpt',
+  no: string | number,
+  options: { extractImages?: boolean; includeImageSource?: boolean; proxy?: ProxyConfig } = {}
+): Promise<Post | null> {
+  const { extractImages = true, includeImageSource = false, proxy } = options;
   if (no === undefined || no === null) return null;
   const postNo = String(no);
   if (!postNo) return null;
 
   const url = `${BASE_URL}/mgallery/board/view/?id=${galleryId}&no=${postNo}`;
   try {
-    const html = await getWithRetry(url);
+    const html = await getWithRetry(url, typeof proxy !== 'undefined' ? { proxy } : undefined);
     const $ = cheerio.load(html);
     const title = extractText($, 'header .title_subject');
     const author = extractText($, 'header .gall_writer .nickname');
@@ -37,7 +41,7 @@ async function getPostContent(galleryId: string = 'chatgpt', no: string | number
     const recommendCount = extractText($, '.btn_recommend_box .up_num_box .up_num', 'null');
     const dislikeCount = extractText($, '.btn_recommend_box .down_num_box .down_num', 'null');
 
-    const comments = await getCommentsForPost(no, galleryId, String(e_s_n_o));
+    const comments = await getCommentsForPost(no, galleryId, String(e_s_n_o), typeof proxy !== 'undefined' ? { proxy } : undefined);
 
     const result: Post = { postNo, title, author, date, content, viewCount, recommendCount, dislikeCount, comments: comments || { totalCount: 0, items: [] } };
     if (extractImages && imageUrls && imageUrls.length) (result as any).images = imageUrls;

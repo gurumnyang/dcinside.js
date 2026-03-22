@@ -61,6 +61,7 @@ export interface GetPostListOptions {
    * When provided, list requests will include cookies stored in the jar.
    */
   jar?: CookieJar;
+  proxy?: ProxyConfig;
 }
 
 export interface GetPostOptions {
@@ -69,6 +70,7 @@ export interface GetPostOptions {
   extractImages?: boolean;
   includeImageSource?: boolean;
   retryCount?: number;
+  proxy?: ProxyConfig;
 }
 
 export interface GetPostsOptions {
@@ -79,6 +81,7 @@ export interface GetPostsOptions {
   includeImageSource?: boolean;
   onProgress?: (current: number, total: number) => void;
   retryCount?: number;
+  proxy?: ProxyConfig;
 }
 
 export interface ImageProcessOptions {
@@ -114,6 +117,10 @@ export interface AutocompleteResponse {
   time?: { time: string };
 }
 
+export interface AutocompleteOptions {
+  proxy?: ProxyConfig;
+}
+
 export interface SearchPost {
   title: string;
   content?: string;
@@ -141,6 +148,11 @@ export interface SearchResult {
   posts: SearchPost[];
 }
 
+export interface SearchOptions {
+  sort?: 'latest' | 'accuracy';
+  proxy?: ProxyConfig;
+}
+
 export interface MobileLoginCookie {
   key: string;
   value: string;
@@ -165,6 +177,7 @@ export interface MobileLoginOptions {
   returnUrl?: string;
   userAgent?: string;
   jar?: CookieJar;
+  proxy?: ProxyConfig;
 }
 
 export interface MobileLoginResult {
@@ -192,6 +205,7 @@ export interface MobileCreatePostOptions {
   useGallNickname?: boolean;
   jar?: CookieJar;
   userAgent?: string;
+  proxy?: ProxyConfig;
   extraFields?: Record<string, string | undefined>;
 }
 
@@ -210,6 +224,7 @@ export interface MobileDeletePostOptions {
   jar?: CookieJar;
   password?: string;
   userAgent?: string;
+  proxy?: ProxyConfig;
 }
 
 export interface MobileDeletePostResult {
@@ -230,6 +245,7 @@ export interface MobileCreateCommentOptions {
   captchaKey?: string;
   useGallNickname?: boolean;
   userAgent?: string;
+  proxy?: ProxyConfig;
 }
 
 export interface MobileCreateCommentResult {
@@ -250,6 +266,7 @@ export interface MobileDeleteCommentOptions {
   jar?: CookieJar;
   password?: string;
   userAgent?: string;
+  proxy?: ProxyConfig;
 }
 
 export interface MobileDeleteCommentResult {

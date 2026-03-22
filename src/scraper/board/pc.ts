@@ -2,22 +2,26 @@ import * as cheerio from 'cheerio';
 import type { CookieJar } from 'tough-cookie';
 import config = require('../../config');
 import { getWithRetry } from '../../http';
+import type { ProxyConfig } from '../../types';
 
 const { BASE_URL } = config as any;
 
 async function scrapeBoardPage(
   page: number,
   galleryId: string,
-  options: { boardType?: 'all' | 'recommend' | 'notice'; id?: string; subject?: string; nickname?: string; ip?: string; jar?: CookieJar } = {}
+  options: { boardType?: 'all' | 'recommend' | 'notice'; id?: string; subject?: string; nickname?: string; ip?: string; jar?: CookieJar; proxy?: ProxyConfig } = {}
 ): Promise<any[]> {
-  const { boardType = 'all', id, subject, nickname, ip, jar } = options;
+  const { boardType = 'all', id, subject, nickname, ip, jar, proxy } = options;
   if (page <= 0) return [];
 
   const url = `${BASE_URL}/mgallery/board/lists/?id=${galleryId}` +
     `&list_num=100&search_head=&page=${page}&exception_mode=${boardType}`;
 
   try {
-    const html = await getWithRetry(url, jar ? { jar } : undefined);
+    const html = await getWithRetry(url, {
+      ...(jar ? { jar } : {}),
+      ...(typeof proxy !== 'undefined' ? { proxy } : {}),
+    });
     const $ = cheerio.load(html);
     const posts: any[] = [];
     const types = [

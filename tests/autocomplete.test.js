@@ -48,9 +48,22 @@ describe('getAutocomplete', () => {
     await expect(getAutocomplete('')).rejects.toBeInstanceOf(CrawlError);
   });
 
+  test('passes proxy option to request config', async () => {
+    let capturedOptions;
+    const proxy = { host: '127.0.0.1', port: 8080 };
+    axios.__setGetImpl((url, options) => {
+      capturedOptions = options;
+      return Promise.resolve({ data: `${options.params.callback}(${JSON.stringify({ gallery: { total: 1 } })})` });
+    });
+
+    const result = await getAutocomplete('chatgpt', { proxy });
+
+    expect(result.gallery.total).toBe(1);
+    expect(capturedOptions.proxy).toEqual(proxy);
+  });
+
   test('throws CrawlError on invalid JSONP', async () => {
     axios.__setGetImpl(() => Promise.resolve({ data: 'invalid_payload' }));
     await expect(getAutocomplete('test')).rejects.toBeInstanceOf(CrawlError);
   });
 });
-

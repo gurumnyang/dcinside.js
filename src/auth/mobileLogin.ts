@@ -9,6 +9,7 @@ import type {
   MobileLoginResult,
   MobileLoginTokens,
   MobileLoginCookie,
+  ProxyConfig,
 } from '../types';
 
 const LOGIN_ORIGIN = 'https://msign.dcinside.com';
@@ -87,7 +88,7 @@ const resolveLocation = (fromUrl: string, location: string): string => {
 };
 
 // 모바일 전용 axios 인스턴스
-const createMobileAxios = (jar: CookieJar, userAgent?: string): AxiosInstance => {
+const createMobileAxios = (jar: CookieJar, userAgent?: string, proxy?: ProxyConfig): AxiosInstance => {
   const headersUA = userAgent || DEFAULT_MOBILE_UA;
   return wrapper(axios.create({
     timeout: config.HTTP.TIMEOUT,
@@ -98,6 +99,7 @@ const createMobileAxios = (jar: CookieJar, userAgent?: string): AxiosInstance =>
     },
     jar,
     maxRedirects: 0,
+    proxy,
   } as AxiosRequestConfig));
 };
 
@@ -340,13 +342,14 @@ export async function mobileLogin(options: MobileLoginOptions): Promise<MobileLo
     returnUrl = DEFAULT_RETURN_URL,
     userAgent,
     jar: providedJar,
+    proxy,
   } = options || {};
 
   if (!code) throw new Error('code(식별 코드)는 필수 입력 값입니다.');
   if (!password) throw new Error('password(비밀번호)는 필수 입력 값입니다.');
 
   const jar = providedJar || new CookieJar();
-  const client = createMobileAxios(jar, userAgent);
+  const client = createMobileAxios(jar, userAgent, proxy);
 
   const { tokens, html } = await fetchLoginPage(client, returnUrl, DEFAULT_RETURN_URL);
 

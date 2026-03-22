@@ -56,7 +56,16 @@ describe('Public API (index.js) - unit (mocked)', () => {
     expect(scrapeBoardPage).toHaveBeenCalledWith(1, 'g', { boardType: 'all', jar });
   });
 
-    test('getPost delegates to mobile getMobilePostContent with rest options including retryCount', async () => {
+  test('getPostList passes proxy through when provided', async () => {
+    scrapeBoardPage.mockResolvedValue([]);
+    const proxy = { host: '127.0.0.1', port: 8080 };
+
+    await api.getPostList({ page: 1, galleryId: 'g', boardType: 'all', proxy });
+
+    expect(scrapeBoardPage).toHaveBeenCalledWith(1, 'g', { boardType: 'all', proxy });
+  });
+
+  test('getPost delegates to mobile getMobilePostContent with rest options including retryCount', async () => {
     const fakePost = { postNo: '123', title: 'Hello', author: 'me', date: '', content: '', comments: { totalCount: 0, items: [] } };
     getMobilePostContent.mockResolvedValue(fakePost);
 
@@ -72,6 +81,16 @@ describe('Public API (index.js) - unit (mocked)', () => {
     const res = await api.getPostLegacy({ galleryId: 'g', postNo: '321' });
     expect(getPostContent).toHaveBeenCalledWith('g', '321', {});
     expect(res).toEqual(fakePost);
+  });
+
+  test('getPost passes proxy through to mobile parser', async () => {
+    const fakePost = { postNo: '123', title: 'Hello', author: 'me', date: '', content: '', comments: { totalCount: 0, items: [] } };
+    const proxy = { host: '127.0.0.1', port: 8080 };
+    getMobilePostContent.mockResolvedValue(fakePost);
+
+    await api.getPost({ galleryId: 'g', postNo: '123', proxy });
+
+    expect(getMobilePostContent).toHaveBeenCalledWith('g', '123', { proxy });
   });
 
   test('getPosts iterates via mobile parser, calls delay, onProgress, and returns posts', async () => {
@@ -104,6 +123,23 @@ describe('Public API (index.js) - unit (mocked)', () => {
     expect(progressCalls).toBe(numbers.length);
     expect(Array.isArray(res)).toBe(true);
     expect(res.length).toBe(4);
+  });
+
+  test('getPosts passes proxy to each mobile parser call', async () => {
+    getMobilePostContent
+      .mockResolvedValueOnce({ postNo: '1', title: 'P1', author: '', date: '', content: '', comments: { totalCount: 0, items: [] } })
+      .mockResolvedValueOnce({ postNo: '2', title: 'P2', author: '', date: '', content: '', comments: { totalCount: 0, items: [] } });
+
+    const proxy = { host: '127.0.0.1', port: 8080 };
+
+    await api.getPosts({
+      galleryId: 'g',
+      postNumbers: ['1', '2'],
+      proxy,
+    });
+
+    expect(getMobilePostContent).toHaveBeenNthCalledWith(1, 'g', '1', { proxy });
+    expect(getMobilePostContent).toHaveBeenNthCalledWith(2, 'g', '2', { proxy });
   });
 
   test('getRandomUserAgent comes from util (mocked)', () => {

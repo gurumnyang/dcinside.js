@@ -5,6 +5,7 @@ const autocomplete = require('./src/autocomplete');
 const searchModule = require('./src/search');
 const auth = require('./src/auth');
 import type {
+  AutocompleteOptions,
   GetPostListOptions,
   PostInfo,
   GetPostOptions,
@@ -22,15 +23,16 @@ import type {
   MobileDeleteCommentResult,
   BestRecommendOptions,
   BestRecommendResult,
+  SearchOptions,
 } from './src/types';
 
-async function getPostList({ page, galleryId, boardType = 'all', jar }: GetPostListOptions): Promise<PostInfo[]> {
-  return scraper.scrapeBoardPage(page, galleryId, jar ? { boardType, jar } : { boardType });
+async function getPostList({ page, galleryId, boardType = 'all', jar, proxy }: GetPostListOptions): Promise<PostInfo[]> {
+  return scraper.scrapeBoardPage(page, galleryId, { boardType, ...(jar ? { jar } : {}), ...(typeof proxy !== 'undefined' ? { proxy } : {}) });
 }
 
 // Legacy: PC board list
-async function getPostListLegacy({ page, galleryId, boardType = 'all', jar }: GetPostListOptions): Promise<PostInfo[]> {
-  return scraper.scrapeBoardPageLegacy(page, galleryId, jar ? { boardType, jar } : { boardType });
+async function getPostListLegacy({ page, galleryId, boardType = 'all', jar, proxy }: GetPostListOptions): Promise<PostInfo[]> {
+  return scraper.scrapeBoardPageLegacy(page, galleryId, { boardType, ...(jar ? { jar } : {}), ...(typeof proxy !== 'undefined' ? { proxy } : {}) });
 }
 
 // New default: use mobile post content
@@ -61,8 +63,8 @@ async function getPosts({ galleryId, postNumbers, delayMs = 100, onProgress, ...
   return out;
 }
 
-async function getAutocomplete(query: string) { return autocomplete.getAutocomplete(query); }
-async function search(query: string, options: any = {}) { return searchModule.search(query, options); }
+async function getAutocomplete(query: string, options: AutocompleteOptions = {}) { return autocomplete.getAutocomplete(query, options); }
+async function search(query: string, options: SearchOptions = {}) { return searchModule.search(query, options); }
 
 async function mobileLogin(options: MobileLoginOptions): Promise<MobileLoginResult> {
   return auth.mobileLogin(options);

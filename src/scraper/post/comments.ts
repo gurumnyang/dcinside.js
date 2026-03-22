@@ -1,12 +1,18 @@
 import config = require('../../config');
 import { delay } from '../../util';
 import { postWithRetry } from '../../http';
-import type { Comments } from '../../types';
+import type { Comments, ProxyConfig } from '../../types';
 
 const { BASE_URL } = config as any;
 const HEADERS = { 'User-Agent': (config as any).HTTP.USER_AGENT };
 
-async function getCommentsForPost(no: string | number, galleryId: string, e_s_n_o: string): Promise<Comments | null> {
+async function getCommentsForPost(
+  no: string | number,
+  galleryId: string,
+  e_s_n_o: string,
+  options: { proxy?: ProxyConfig } = {}
+): Promise<Comments | null> {
+  const { proxy } = options;
   const url = `${BASE_URL}/board/comment/`;
   let items: any[] = [];
   let page = 1;
@@ -17,6 +23,7 @@ async function getCommentsForPost(no: string | number, galleryId: string, e_s_n_
     while (page <= maxPages) {
       const params = new URLSearchParams({ id: String(galleryId), no: String(no), cmt_id: String(galleryId), cmt_no: String(no), e_s_n_o, comment_page: String(page), _GALLTYPE_: 'M' });
       const data = await postWithRetry(url, params.toString(), {
+        ...(typeof proxy !== 'undefined' ? { proxy } : {}),
         headers: {
           ...HEADERS,
           'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',

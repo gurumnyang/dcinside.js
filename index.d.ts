@@ -81,6 +81,7 @@ declare module "@gurumnyang/dcinside.js" {
     delayMs?: number;
     /** Optional cookie jar for authenticated/remembered sessions. */
     jar?: CookieJar;
+    proxy?: ProxyConfig;
   }
 
   /**
@@ -95,6 +96,7 @@ declare module "@gurumnyang/dcinside.js" {
     includeImageSource?: boolean;
     /** 이 게시글 요청에 사용할 재시도 횟수 (전역 기본값을 덮어씀) */
     retryCount?: number;
+    proxy?: ProxyConfig;
   }
 
   /**
@@ -110,6 +112,7 @@ declare module "@gurumnyang/dcinside.js" {
     includeImageSource?: boolean;
     onProgress?: (current: number, total: number) => void;
     retryCount?: number;
+    proxy?: ProxyConfig;
   }
 
   /**
@@ -136,6 +139,7 @@ declare module "@gurumnyang/dcinside.js" {
     captchaKey?: string;
     useGallNickname?: boolean;
     userAgent?: string;
+    proxy?: ProxyConfig;
   }
 
   /** 모바일 댓글 작성 결과 */
@@ -195,6 +199,10 @@ declare module "@gurumnyang/dcinside.js" {
     time?: { time: string };
   }
 
+  export interface AutocompleteOptions {
+    proxy?: ProxyConfig;
+  }
+
   /**
    * 페이지 범위로 게시글 목록을 수집합니다.
    */
@@ -225,7 +233,7 @@ declare module "@gurumnyang/dcinside.js" {
   /**
    * 검색어 자동완성 결과를 반환합니다.
    */
-  export function getAutocomplete(query: string): Promise<AutocompleteResponse>;
+  export function getAutocomplete(query: string, options?: AutocompleteOptions): Promise<AutocompleteResponse>;
 
   /** 검색 결과 게시글 항목 */
   export interface SearchPost {
@@ -260,6 +268,11 @@ declare module "@gurumnyang/dcinside.js" {
     posts: SearchPost[];
   }
 
+  export interface SearchOptions {
+    sort?: 'latest' | 'accuracy';
+    proxy?: ProxyConfig;
+  }
+
   /**
    * 통합검색을 수행하고 파싱된 결과를 반환합니다.
    */
@@ -268,7 +281,7 @@ declare module "@gurumnyang/dcinside.js" {
    * @param query 검색어
    * @param options 정렬 옵션
    */
-  export function search(query: string, options?: { sort?: 'latest' | 'accuracy' }): Promise<SearchResult>;
+  export function search(query: string, options?: SearchOptions): Promise<SearchResult>;
 
   /**
    * 지정된 시간(밀리초) 동안 실행을 지연시킵니다.
@@ -333,19 +346,21 @@ declare module "@gurumnyang/dcinside.js" {
         subject?: string | null;
         nickname?: string | null;
         ip?: string | null;
+        jar?: CookieJar;
+        proxy?: ProxyConfig;
       }
     ) => Promise<PostInfo[]>;
     /** 모바일 게시판 목록(기본) */
     scrapeBoardPage: (
       page: number,
       galleryId: string,
-      options?: { boardType?: string; id?: string | null; subject?: string | null; nickname?: string | null; ip?: string | null; }
+      options?: { boardType?: string; id?: string | null; subject?: string | null; nickname?: string | null; ip?: string | null; jar?: CookieJar; proxy?: ProxyConfig; }
     ) => Promise<PostInfo[]>;
     /** PC 게시판 목록(레거시) */
     scrapeBoardPageLegacy: (
       page: number,
       galleryId: string,
-      options?: { boardType?: string; id?: string | null; subject?: string | null; nickname?: string | null; ip?: string | null; }
+      options?: { boardType?: string; id?: string | null; subject?: string | null; nickname?: string | null; ip?: string | null; jar?: CookieJar; proxy?: ProxyConfig; }
     ) => Promise<PostInfo[]>;
     
     getPostContent: (
@@ -353,8 +368,9 @@ declare module "@gurumnyang/dcinside.js" {
       no: string | number,
       options?: {
         extractImages?: boolean;
-  includeImageSource?: boolean;
-  retryCount?: number;
+        includeImageSource?: boolean;
+        retryCount?: number;
+        proxy?: ProxyConfig;
       }
     ) => Promise<Post | null>;
     
@@ -364,15 +380,19 @@ declare module "@gurumnyang/dcinside.js" {
       no: string | number,
       options?: {
         extractImages?: boolean;
-  includeImageSource?: boolean;
-  retryCount?: number;
+        includeImageSource?: boolean;
+        retryCount?: number;
+        proxy?: ProxyConfig;
       }
     ) => Promise<Post | null>;
     
     getCommentsForPost: (
       no: string | number,
       galleryId: string,
-      e_s_n_o: string
+      e_s_n_o: string,
+      options?: {
+        proxy?: ProxyConfig;
+      }
     ) => Promise<Comments | null>;
     
     extractText: (
@@ -392,7 +412,8 @@ declare module "@gurumnyang/dcinside.js" {
     ) => string[] | null;
 
     getAutocomplete: (
-      query: string
+      query: string,
+      options?: AutocompleteOptions
     ) => Promise<AutocompleteResponse>;
 
     recommendBestPost: (

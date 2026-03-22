@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { getWithRetry } from '../../http';
+import type { ProxyConfig } from '../../types';
 
 const MOBILE_BASE_URL = 'https://m.dcinside.com';
 
@@ -121,8 +122,8 @@ function parseMobilePostHtml(html: string, options: { extractImages?: boolean, i
   return { title, author, date, content, viewCount, recommendCount, dislikeCount, comments: { totalCount, items }, images: (extractImages && imageUrls && imageUrls.length) ? imageUrls : undefined };
 }
 
-async function getMobilePostContent(galleryId: string = 'chatgpt', no: string | number, options: { extractImages?: boolean, includeImageSource?: boolean, retryCount?: number } = {}) {
-  const { extractImages = true, includeImageSource = false, retryCount } = options;
+async function getMobilePostContent(galleryId: string = 'chatgpt', no: string | number, options: { extractImages?: boolean, includeImageSource?: boolean, retryCount?: number, proxy?: ProxyConfig } = {}) {
+  const { extractImages = true, includeImageSource = false, retryCount, proxy } = options;
   if (no === undefined || no === null) return null;
   const postNo = String(no);
   if (!postNo) return null;
@@ -137,7 +138,12 @@ async function getMobilePostContent(galleryId: string = 'chatgpt', no: string | 
       'Cache-Control': 'no-cache',
       'Pragma': 'no-cache',
     };
-    const html = await getWithRetry(url, { responseType: 'text', headers: MOBILE_HEADERS, retryCount } as any);
+    const html = await getWithRetry(url, {
+      responseType: 'text',
+      headers: MOBILE_HEADERS,
+      retryCount,
+      ...(typeof proxy !== 'undefined' ? { proxy } : {}),
+    } as any);
     const parsed = parseMobilePostHtml(html, { extractImages, includeImageSource });
     if (!parsed) return null;
     return { postNo, ...parsed };

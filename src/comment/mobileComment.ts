@@ -81,6 +81,7 @@ export async function createMobileComment(
     captchaCode,
     captchaKey,
     useGallNickname,
+    proxy,
   } = options || ({} as MobileCreateCommentOptions);
 
   if (!galleryId) throw new Error('galleryId는 필수입니다.');
@@ -89,7 +90,7 @@ export async function createMobileComment(
   if (!memo) throw new Error('content는 비어 있을 수 없습니다.');
 
   const jar = providedJar || new CookieJar();
-  const client = createMobileClient(jar, userAgent);
+  const client = createMobileClient(jar, userAgent, proxy);
 
   const postUrl = `${WRITE_BASE_URL}/board/${encodeURIComponent(galleryId)}/${encodeURIComponent(String(postId))}`;
   const boardReferer = `${WRITE_BASE_URL}/board/${encodeURIComponent(galleryId)}`;
@@ -260,13 +261,13 @@ export async function createMobileComment(
 export async function deleteMobileComment(
   options: MobileDeleteCommentOptions,
 ): Promise<MobileDeleteCommentResult> {
-  const { galleryId, postId, commentId, jar: providedJar, password, userAgent } = options;
+  const { galleryId, postId, commentId, jar: providedJar, password, userAgent, proxy } = options;
   if (!galleryId) throw new Error('galleryId는 필수입니다.');
   if (postId === undefined || postId === null) throw new Error('postId는 필수입니다.');
   if (!commentId) throw new Error('commentId는 필수입니다.');
 
   const jar = providedJar || new CookieJar();
-  const client = createMobileClient(jar, userAgent);
+  const client = createMobileClient(jar, userAgent, proxy);
 
   const postUrl = `${WRITE_BASE_URL}/board/${encodeURIComponent(galleryId)}/${encodeURIComponent(String(postId))}`;
   const boardReferer = `${WRITE_BASE_URL}/board/${encodeURIComponent(galleryId)}`;

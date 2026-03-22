@@ -71,6 +71,7 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
     useGallNickname,
     jar: providedJar,
     userAgent,
+    proxy,
     extraFields,
   } = options;
 
@@ -85,7 +86,7 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
   }
 
   const jar = providedJar || new CookieJar();
-  const client = createMobileClient(jar, userAgent);
+  const client = createMobileClient(jar, userAgent, proxy);
 
   const writeUrl = `${WRITE_BASE_URL}/write/${encodeURIComponent(galleryId)}`;
   const refererBoard = `${WRITE_BASE_URL}/board/${encodeURIComponent(galleryId)}`;
@@ -236,12 +237,12 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
 
 // 모바일 글삭제
 export async function deleteMobilePost(options: MobileDeletePostOptions): Promise<MobileDeletePostResult> {
-  const { galleryId, postId, jar: providedJar, password, userAgent } = options;
+  const { galleryId, postId, jar: providedJar, password, userAgent, proxy } = options;
   if (!galleryId) throw new Error('galleryId는 필수입니다.');
   if (postId === undefined || postId === null) throw new Error('postId는 필수입니다.');
 
   const jar = providedJar || new CookieJar();
-  const client = createMobileClient(jar, userAgent);
+  const client = createMobileClient(jar, userAgent, proxy);
 
   const postUrl = `${WRITE_BASE_URL}/board/${encodeURIComponent(galleryId)}/${encodeURIComponent(String(postId))}`;
   const boardReferer = `${WRITE_BASE_URL}/board/${encodeURIComponent(galleryId)}`;

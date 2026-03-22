@@ -102,6 +102,20 @@ describe('search parsing', () => {
     expect(capturedUrl).toContain('/combine/sort/latest/q/');
   });
 
+  test('search() passes proxy option to request config', async () => {
+    let capturedOptions = null;
+    const proxy = { host: '127.0.0.1', port: 8080 };
+    axios.__setGetImpl((url, options) => {
+      capturedOptions = options;
+      return Promise.resolve({ data: SAMPLE_HTML });
+    });
+
+    const res = await search('검색쿼리', { proxy });
+
+    expect(res.posts.length).toBeGreaterThan(0);
+    expect(capturedOptions.proxy).toEqual(proxy);
+  });
+
   test('search() throws on empty query', async () => {
     await expect(search('')).rejects.toBeInstanceOf(CrawlError);
   });

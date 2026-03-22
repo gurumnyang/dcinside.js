@@ -1,6 +1,7 @@
 import { CrawlError } from './util';
 import config = require('./config');
 import { getWithRetry } from './http';
+import type { AutocompleteOptions, AutocompleteResponse } from './types';
 
 const { USER_AGENT } = config.HTTP;
 
@@ -31,7 +32,7 @@ async function fetchWithRetry(url: string, options: any = {}) {
   return getWithRetry(url, { ...options, headers: { ...DEFAULT_HEADERS, ...(options.headers || {}) } });
 }
 
-async function getAutocomplete(query: string): Promise<any> {
+async function getAutocomplete(query: string, options: AutocompleteOptions = {}): Promise<AutocompleteResponse> {
   if (!query || typeof query !== 'string') {
     throw new CrawlError('유효한 검색어(query)가 필요합니다.', 'parse');
   }
@@ -48,6 +49,7 @@ async function getAutocomplete(query: string): Promise<any> {
 
   try {
     const data = await fetchWithRetry(url, {
+      ...(typeof options.proxy !== 'undefined' ? { proxy: options.proxy } : {}),
       params,
       responseType: 'text'
     });

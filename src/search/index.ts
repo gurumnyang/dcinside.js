@@ -4,6 +4,7 @@ import { getWithRetry } from '../http';
 import { CrawlError } from '../util';
 const { encodeAutocompleteKey } = require('../autocomplete');
 import { parseSearchHtml } from './parse';
+import type { SearchOptions } from '../types';
 
 const DEFAULT_HEADERS = {
   'User-Agent': config.HTTP.USER_AGENT,
@@ -18,13 +19,13 @@ async function fetchWithRetry(url: string, options: any = {}) {
   return getWithRetry(url, { ...options, headers: { ...DEFAULT_HEADERS, ...(options.headers || {}) }, responseType: 'text' });
 }
 
-async function search(query: string, options: { sort?: 'latest' | 'accuracy' } = {}) {
+async function search(query: string, options: SearchOptions = {}) {
   if (!query || typeof query !== 'string') throw new CrawlError('유효한 검색어(query)가 필요합니다', 'parse');
   const k = encodeAutocompleteKey(query);
   const sort = options && (options.sort === 'latest' || options.sort === 'accuracy') ? options.sort : undefined;
   const sortPath = sort ? `/sort/${sort}` : '';
   const url = `https://search.dcinside.com/combine${sortPath}/q/${k}`;
-  const html = await fetchWithRetry(url);
+  const html = await fetchWithRetry(url, typeof options.proxy !== 'undefined' ? { proxy: options.proxy } : undefined);
   return parseSearchHtml(html, 'https://search.dcinside.com');
 }
 

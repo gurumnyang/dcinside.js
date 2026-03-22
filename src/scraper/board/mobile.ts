@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import type { CookieJar } from 'tough-cookie';
 import { getWithRetry } from '../../http';
+import type { ProxyConfig } from '../../types';
 
 const MOBILE_BASE_URL = 'https://m.dcinside.com';
 
@@ -16,12 +17,12 @@ function setCookieAsync(jar: CookieJar, cookie: string, url: string): Promise<vo
 async function scrapeMobileBoardPage(
   page: number,
   galleryId: string,
-  options: { boardType?: 'all' | 'recommend' | 'notice'; id?: string; subject?: string; nickname?: string; ip?: string; jar?: CookieJar } = {}
+  options: { boardType?: 'all' | 'recommend' | 'notice'; id?: string; subject?: string; nickname?: string; ip?: string; jar?: CookieJar; proxy?: ProxyConfig } = {}
 ): Promise<any[]> {
-  const { boardType = 'all', id, subject, nickname, ip, jar } = options;
+  const { boardType = 'all', id, subject, nickname, ip, jar, proxy } = options;
   if (boardType === 'notice') {
     const { scrapeBoardPage } = require('./pc');
-    return scrapeBoardPage(page, galleryId, { boardType, id, subject, nickname, ip, jar });
+    return scrapeBoardPage(page, galleryId, { boardType, id, subject, nickname, ip, jar, proxy });
   }
   if (page <= 0) return [];
 
@@ -39,6 +40,7 @@ async function scrapeMobileBoardPage(
   try {
     const html = await getWithRetry(url, {
       ...(jar ? { jar } : {}),
+      ...(typeof proxy !== 'undefined' ? { proxy } : {}),
       headers: {
         'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-G973N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Mobile Safari/537.36',
         ...(jar ? {} : { Cookie: 'list_count=100' }),

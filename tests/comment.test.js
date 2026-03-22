@@ -181,3 +181,27 @@ test('createMobileComment treats boolean result true as success', async () => {
   expect(result.success).toBe(true);
   expect(result.commentId).toBe('12345');
 });
+
+test('createMobileComment passes proxy to mobile client', async () => {
+  const postMock = jest.fn((url) => {
+    if (url.endsWith('/ajax/access')) {
+      return Promise.resolve({ data: { Block_key: 'mock-con-key' }, status: 200 });
+    }
+    return Promise.resolve({ data: { result: 1, comment_no: '321' }, status: 200 });
+  });
+  const proxy = { host: '127.0.0.1', port: 8080 };
+
+  createMobileClient.mockReturnValue({ post: postMock });
+  getWithRedirect.mockResolvedValue({ data: loggedInHtml });
+
+  const result = await createMobileComment({
+    galleryId: 'chatgpt',
+    postId: 1,
+    content: 'proxy test',
+    jar: new CookieJar(),
+    proxy,
+  });
+
+  expect(createMobileClient).toHaveBeenCalledWith(expect.any(CookieJar), undefined, proxy);
+  expect(result.success).toBe(true);
+});
