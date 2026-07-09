@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import { getWithRetry } from '../../http';
 import type { ProxyConfig } from '../../types';
+const { removeNonContentElements } = require('./html');
 
 const MOBILE_BASE_URL = 'https://m.dcinside.com';
 
@@ -69,6 +70,7 @@ function parseMobilePostHtml(html: string, options: { extractImages?: boolean, i
   const date = normalizeText(headerInfo.eq(1).text());
 
   const contentEl = $('.thum-txtin');
+  removeNonContentElements(contentEl);
   const imgOpts = { mode: extractImages ? 'both' as const : 'replace' as const, placeholder: 'image', includeSource: includeImageSource };
   const imageUrls = processImagesMobile(contentEl, imgOpts) || undefined;
   const content = extractTextPreserveNewlines($, contentEl);

@@ -7,6 +7,10 @@ const extractText = ($: any, selector: string, defaultValue = ''): string => (
   $(selector).text().trim() || defaultValue
 );
 
+const removeNonContentElements = (element: any): void => {
+  element.find('script, style, noscript, template, iframe, .adv-groupin').remove();
+};
+
 const processImages = (element: any, options: ImageProcessOptions = {}): string[] | null => {
   const { mode = 'replace', placeholder = 'image', includeSource = false } = options;
   const imageUrls: string[] = [];
@@ -46,6 +50,7 @@ const replaceImagesWithPlaceholder = (element: any, placeholder = 'image'): void
 
 export = {
   extractText,
+  removeNonContentElements,
   processImages,
   replaceImagesWithPlaceholder,
 };

@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import config = require('../../config');
 import { getWithRetry } from '../../http';
-const { extractText, processImages } = require('./html');
+const { extractText, removeNonContentElements, processImages } = require('./html');
 const { getCommentsForPost } = require('./comments');
 import type { Post, ProxyConfig } from '../../types';
 
@@ -30,6 +30,7 @@ async function getPostContent(
     if (!title && !contentEl.length && !e_s_n_o) {
       return null;
     }
+    removeNonContentElements(contentEl);
     const imgOpts = { mode: extractImages ? 'both' as const : 'replace' as const, placeholder: 'image', includeSource: includeImageSource };
     const imageUrls = processImages(contentEl, imgOpts) || undefined;
 
