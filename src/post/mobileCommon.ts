@@ -6,6 +6,7 @@ import { URL } from 'node:url';
 
 export const WRITE_BASE_URL = 'https://m.dcinside.com';
 export const WRITE_UPLOAD_URL = 'https://mupload.dcinside.com/write_new.php';
+export const IMAGE_UPLOAD_URL = 'https://mupload.dcinside.com/upload_img.php';
 export const DELETE_POST_ENDPOINT = 'https://m.dcinside.com/del/board';
 export const DELETE_COMMENT_ENDPOINT = 'https://m.dcinside.com/del/comment';
 
@@ -102,7 +103,9 @@ export function findBlockOrConKey(data: any): string | undefined {
 
 export function parseRedirectFromHtml(html?: string): { url?: string; postId?: string; message?: string } {
   if (!html) return {};
-  const locationMatch = html.match(/location\.(?:href|replace)\s*\(\s*['"]([^'";]+)['"]/);
+  const replaceMatch = html.match(/(?:(?:window|parent|top|document)\.)?location\.replace\s*\(\s*['"]([^'"]+)['"]\s*\)/i);
+  const assignmentMatch = html.match(/(?:(?:window|parent|top|document)\.)?location(?:\.href)?\s*=\s*['"]([^'"]+)['"]/i);
+  const metaRefreshMatch = html.match(/<meta[^>]+http-equiv=['"]?refresh['"]?[^>]+content=['"][^'"]*?url=([^'"\s>]+)[^'"]*['"]/i);
   const alertMatch = html.match(/alert\((['"])(.*?)\1\)/);
   let message = alertMatch ? alertMatch[2] : undefined;
   if (!message) {
@@ -114,8 +117,10 @@ export function parseRedirectFromHtml(html?: string): { url?: string; postId?: s
       // ignore parse errors
     }
   }
-  const redirectUrl = locationMatch ? locationMatch[1] : undefined;
-  const postMatch = redirectUrl?.match(/\/(\d+)(?:\?|$)/);
+  const redirectUrl = replaceMatch?.[1] || assignmentMatch?.[1] || metaRefreshMatch?.[1];
+  const postMatch = redirectUrl?.match(/\/board\/[^/?#]+\/(\d+)(?:[/?#]|$)/)
+    || redirectUrl?.match(/[?&]no=(\d+)(?:&|$)/)
+    || redirectUrl?.match(/\/(\d+)(?:[/?#]|$)/);
   return {
     url: redirectUrl,
     postId: postMatch ? postMatch[1] : undefined,

@@ -227,6 +227,8 @@ export interface MobileCreatePostResult {
   message?: string;
   finalHtml?: string;
   responseStatus: number;
+  /** CDN URLs inserted into the post body after image upload. */
+  imageUrls?: string[];
 }
 
 export interface MobileDeletePostOptions {

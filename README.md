@@ -433,13 +433,13 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
   - `jar` (CookieJar, 선택): 로그인으로 확보한 쿠키를 전달할 때 사용
   - `userAgent` (문자열, 선택): 커스텀 User-Agent
   - `extraFields` (객체, 선택): 추가 폼 필드 강제 입력
-  - `images` (MobilePostImage[], 선택): 모바일 글쓰기 폼에 순서대로 첨부할 이미지
+  - `images` (MobilePostImage[], 선택): 모바일 이미지 업로드 엔드포인트에 순서대로 전송해 본문 끝에 삽입할 이미지
     - `data` (Buffer): 이미지 원본 바이트
     - `filename` (문자열): DCInside에 전달할 파일명
     - `contentType` (문자열): `image/jpeg`, `image/png` 같은 MIME 타입
 
 **반환값:**
-- `Promise<MobileCreatePostResult>`: 성공 여부, 게시글 번호, 리다이렉트 URL, 서버 메시지 등을 담은 객체
+- `Promise<MobileCreatePostResult>`: 성공 여부, 게시글 번호, 리다이렉트 URL, 업로드된 `imageUrls`, 서버 메시지 등을 담은 객체
 
 ---
 

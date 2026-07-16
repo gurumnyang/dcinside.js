@@ -13,6 +13,7 @@ import {
   HTML_HEADERS,
   WRITE_BASE_URL,
   WRITE_UPLOAD_URL,
+  IMAGE_UPLOAD_URL,
   DELETE_POST_ENDPOINT,
   createMobileClient,
   getCookiesAsync,
@@ -20,6 +21,66 @@ import {
   findBlockOrConKey,
   parseRedirectFromHtml,
 } from './mobileCommon';
+
+function imageHostForGallery(galleryId: string) {
+  const first = String(galleryId || '').replace(/^mi\$/, '').replace(/^pr\$/, '').charAt(0);
+  if (/^[0-9a-f]$/i.test(first)) return 'https://dcimg6.dcinside.co.kr';
+  if (/^[g-m]$/i.test(first)) return 'https://dcimg7.dcinside.co.kr';
+  return 'https://dcimg8.dcinside.co.kr';
+}
+
+async function uploadPostImages({ client, galleryId, images, csrfToken, writeUrl, userAgent }: {
+  client: ReturnType<typeof createMobileClient>;
+  galleryId: string;
+  images: NonNullable<MobileCreatePostOptions['images']>;
+  csrfToken: string;
+  writeUrl: string;
+  userAgent?: string;
+}) {
+  if (!images.length) return [];
+  const ajaxHeaders = {
+    ...AJAX_HEADERS,
+    'x-csrf-token': csrfToken,
+    Referer: writeUrl,
+  };
+  const permissionRes = await client.post(
+    `${WRITE_BASE_URL}/ajax/i_filter`,
+    new URLSearchParams({ id: galleryId }).toString(),
+    { headers: ajaxHeaders, validateStatus: status => status >= 200 && status < 400 },
+  );
+  if (permissionRes.data?.result === false) {
+    throw new Error(permissionRes.data?.cause || permissionRes.data?.msg || '이미지 업로드가 거부되었습니다.');
+  }
+
+  const uploadForm = new FormData();
+  uploadForm.append('id', galleryId);
+  for (const image of images) {
+    uploadForm.append('upload[]', image.data, {
+      filename: image.filename,
+      contentType: image.contentType,
+      knownLength: image.data.length,
+    });
+  }
+  const uploadRes = await client.post(IMAGE_UPLOAD_URL, uploadForm, {
+    headers: {
+      ...uploadForm.getHeaders(),
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      Origin: WRITE_BASE_URL,
+      Referer: writeUrl,
+      'User-Agent': userAgent || DEFAULT_MOBILE_UA,
+    },
+    responseType: 'json',
+    maxRedirects: 0,
+    validateStatus: status => status >= 200 && status < 400,
+  });
+  const payload = typeof uploadRes.data === 'string' ? JSON.parse(uploadRes.data) : uploadRes.data;
+  const thumbs = Array.isArray(payload?.thumb) ? payload.thumb : [];
+  if (payload?.result !== true || thumbs.length !== images.length) {
+    throw new Error(payload?.msg || `이미지 업로드 결과가 올바르지 않습니다. (${thumbs.length}/${images.length})`);
+  }
+  const host = imageHostForGallery(galleryId);
+  return thumbs.map((thumb: unknown) => `${host}/viewimageM.php?no=${encodeURIComponent(String(thumb))}`);
+}
 
 //CSRF 토큰 추출
 function collectFormFields(html: string) {
@@ -58,6 +119,36 @@ function normaliseHeadText(value: string | number | undefined, current: string |
   if (value === undefined || value === null) return current ?? '0';
   if (typeof value === 'number') return String(value);
   return value;
+}
+
+async function findCreatedPostId(
+  client: ReturnType<typeof createMobileClient>,
+  galleryId: string,
+  subject: string,
+  expectedUserId?: string,
+) {
+  const boardUrl = `${WRITE_BASE_URL}/board/${encodeURIComponent(galleryId)}`;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise(resolve => setTimeout(resolve, 250));
+    const response = await getWithRedirect(client, boardUrl, {
+      headers: { ...HTML_HEADERS, Referer: `${WRITE_BASE_URL}/write/${encodeURIComponent(galleryId)}` },
+      responseType: 'text',
+    });
+    const $ = cheerio.load(response.data as string);
+    let matchedId: string | undefined;
+    $('ul.gall-detail-lst > li').each((_, element) => {
+      if (matchedId) return;
+      const item = $(element);
+      if (item.find('.subjectin').first().text().trim() !== subject.trim()) return;
+      const authorId = String(item.find('.blockInfo').first().attr('data-info') || '').trim();
+      if (expectedUserId && authorId && authorId !== expectedUserId) return;
+      const href = item.find('a.lt').first().attr('href') || '';
+      const match = href.match(/\/board\/[^/?#]+\/(\d+)(?:[/?#]|$)/);
+      if (match) matchedId = match[1];
+    });
+    if (matchedId) return matchedId;
+  }
+  return undefined;
 }
 
 export async function createMobilePost(options: MobileCreatePostOptions): Promise<MobileCreatePostResult> {
@@ -133,10 +224,15 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
   const { fields, csrfToken } = collectFormFields(writePage.data as string);
   if (!csrfToken) throw new Error('CSRF 토큰을 찾을 수 없습니다.');
 
+  const imageUrls = await uploadPostImages({ client, galleryId, images: images || [], csrfToken, writeUrl, userAgent });
+  const contentWithImages = imageUrls.length
+    ? `${content}${imageUrls.map(url => `<div class="block" contenteditable="false"><span class="cont img"><span class="cont-inr"><button type="button" class="sp-imgclose" style="z-index:9999;display:none;"><span class="blind">삭제</span></button><img src="${url}" onload="showRemoveBtn(this);"><span class="pos" style="display:none;"><span class="order-handle"></span></span></span></span></div><p><br></p>`).join('')}`
+    : content;
+
   fields.id = galleryId;
   fields.route_id = fields.route_id || galleryId;
   fields.subject = subject;
-  fields.memo = content;
+  fields.memo = contentWithImages;
   fields.headtext = normaliseHeadText(headText, fields.headtext);
   if (useGallNickname !== undefined && 'use_gall_nickname' in fields) {
     fields.use_gall_nickname = useGallNickname ? '1' : '0';
@@ -184,7 +280,7 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
 
   const filterPayload = new URLSearchParams({
     subject,
-    memo: content,
+    memo: contentWithImages,
     id: galleryId,
     mode: 'write',
     is_mini: '0',
@@ -215,18 +311,8 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
     form.append(key, val);
   }
 
-  if (images?.length) {
-    for (const image of images) {
-      form.append('upload[]', image.data, {
-        filename: image.filename,
-        contentType: image.contentType,
-        knownLength: image.data.length,
-      });
-    }
-  } else {
-    // 기존 텍스트 전용 요청의 multipart 형태를 유지합니다.
-    form.append('files', Buffer.from(''), { filename: '', contentType: 'application/octet-stream' });
-  }
+  // 이미지는 upload_img.php에서 먼저 업로드하고 본문에 CDN URL로 삽입합니다.
+  form.append('files', Buffer.from(''), { filename: '', contentType: 'application/octet-stream' });
 
   const submitHeaders = {
     ...form.getHeaders(),
@@ -248,8 +334,19 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
   });
 
   const html = submitRes.data as string | undefined;
-  const { url: redirectUrl, postId, message } = parseRedirectFromHtml(html);
+  const parsed = parseRedirectFromHtml(html);
+  let redirectUrl = parsed.url;
+  let postId = parsed.postId;
+  const message = parsed.message;
   const success = submitRes.status >= 200 && submitRes.status < 400 && (!message || /등록되었습니다/.test(message));
+  if (success && !postId) {
+    try {
+      postId = await findCreatedPostId(client, galleryId, subject, fields.user_id);
+      if (postId) redirectUrl = `${WRITE_BASE_URL}/board/${encodeURIComponent(galleryId)}/${postId}`;
+    } catch {
+      // 게시 자체는 성공했을 수 있으므로 조회 실패를 등록 실패로 바꾸지 않습니다.
+    }
+  }
 
   return {
     success,
@@ -258,6 +355,7 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
     message,
     finalHtml: html,
     responseStatus: submitRes.status,
+    imageUrls,
   };
 }
 

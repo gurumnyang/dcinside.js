@@ -6,6 +6,8 @@
 - feat: 모바일 게시글 작성 시 `images` 배열로 이미지 파일 첨부 지원
 - validate: 이미지 Buffer, 파일명, `image/*` MIME 타입 검증
 - security: multipart 파일명 개행 차단 및 `axios`, `form-data` 패치 버전 상향
+- fix: 이미지를 별도 업로드한 뒤 반환된 CDN URL을 본문에 삽입하도록 실제 모바일 작성 흐름 반영
+- fix: `location.href = ...` 형식의 등록 응답에서도 게시글 번호 추출
 
 ## [1.12.0] - 2026-03-22
 - feat: `proxy` 옵션 추가
