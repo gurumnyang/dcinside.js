@@ -2,6 +2,11 @@
 
 모든 눈에 띄는 변경 사항은 이 파일에 기록합니다.
 
+## [1.13.0] - 2026-07-17
+- feat: 모바일 게시글 작성 시 `images` 배열로 이미지 파일 첨부 지원
+- validate: 이미지 Buffer, 파일명, `image/*` MIME 타입 검증
+- security: multipart 파일명 개행 차단 및 `axios`, `form-data` 패치 버전 상향
+
 ## [1.12.0] - 2026-03-22
 - feat: `proxy` 옵션 추가
   - `getPostList`, `getPost`, `getPosts`, `search`, `getAutocomplete`

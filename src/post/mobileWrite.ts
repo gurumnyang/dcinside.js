@@ -73,11 +73,27 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
     userAgent,
     proxy,
     extraFields,
+    images,
   } = options;
 
   if (!galleryId) throw new Error('galleryId는 필수입니다.');
   if (!subject) throw new Error('subject는 필수입니다.');
   if (!content) throw new Error('content는 필수입니다.');
+  if (images !== undefined && !Array.isArray(images)) throw new Error('images는 배열이어야 합니다.');
+  for (const [index, image] of (images || []).entries()) {
+    if (!image || !Buffer.isBuffer(image.data) || image.data.length === 0) {
+      throw new Error(`images[${index}].data는 비어 있지 않은 Buffer여야 합니다.`);
+    }
+    if (!String(image.filename || '').trim()) {
+      throw new Error(`images[${index}].filename은 필수입니다.`);
+    }
+    if (/[\r\n]/.test(image.filename)) {
+      throw new Error(`images[${index}].filename에는 개행 문자를 사용할 수 없습니다.`);
+    }
+    if (!/^image\/[a-z0-9.+-]+$/i.test(String(image.contentType || ''))) {
+      throw new Error(`images[${index}].contentType은 image/* MIME 타입이어야 합니다.`);
+    }
+  }
 
   const usingLogin = Boolean(providedJar);
   if (!usingLogin) {
@@ -199,8 +215,18 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
     form.append(key, val);
   }
 
-  // ensure files field exists even when empty
-  form.append('files', Buffer.from(''), { filename: '', contentType: 'application/octet-stream' });
+  if (images?.length) {
+    for (const image of images) {
+      form.append('upload[]', image.data, {
+        filename: image.filename,
+        contentType: image.contentType,
+        knownLength: image.data.length,
+      });
+    }
+  } else {
+    // 기존 텍스트 전용 요청의 multipart 형태를 유지합니다.
+    form.append('files', Buffer.from(''), { filename: '', contentType: 'application/octet-stream' });
+  }
 
   const submitHeaders = {
     ...form.getHeaders(),

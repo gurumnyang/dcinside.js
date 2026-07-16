@@ -195,6 +195,15 @@ export interface MobileLoginResult {
   loginPageHtml?: string;
 }
 
+export interface MobilePostImage {
+  /** Raw image bytes to attach to the post. */
+  data: Buffer;
+  /** Filename presented to DCInside. */
+  filename: string;
+  /** MIME type such as image/jpeg or image/png. */
+  contentType: string;
+}
+
 export interface MobileCreatePostOptions {
   galleryId: string;
   subject: string;
@@ -207,6 +216,8 @@ export interface MobileCreatePostOptions {
   userAgent?: string;
   proxy?: ProxyConfig;
   extraFields?: Record<string, string | undefined>;
+  /** Images attached in order through the mobile write form's upload[] field. */
+  images?: MobilePostImage[];
 }
 
 export interface MobileCreatePostResult {
