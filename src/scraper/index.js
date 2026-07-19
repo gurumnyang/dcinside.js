@@ -21,4 +21,7 @@ module.exports = {
   createMobileComment: post.createMobileComment,
   deleteMobileComment: post.deleteMobileComment,
   recommendBestPost: post.recommendBestPost,
+  bumpManagerPost: post.bumpManagerPost,
+  getGalleryHeadTexts: post.getGalleryHeadTexts,
+  changePostHeadText: post.changePostHeadText,
 };

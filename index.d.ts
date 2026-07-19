@@ -169,6 +169,53 @@ declare module "@gurumnyang/dcinside.js" {
     raw?: any;
   }
 
+  export type ManagerGalleryType = 'minor' | 'mini' | 'person';
+
+  export interface ManagerBumpOptions {
+    galleryId: string;
+    postId: string | number;
+    /** mobileLogin()으로 인증된 해당 갤러리 관리자 세션 */
+    jar: CookieJar;
+    /** 기본값은 마이너 갤러리(minor) */
+    galleryType?: ManagerGalleryType;
+    userAgent?: string;
+    proxy?: ProxyConfig;
+  }
+
+  export interface ManagerBumpResult {
+    success: boolean;
+    message?: string;
+    responseStatus: number;
+    raw?: any;
+  }
+
+  export interface GalleryHeadText {
+    id: string;
+    name: string;
+  }
+
+  export interface GetGalleryHeadTextsOptions {
+    galleryId: string;
+    galleryType?: ManagerGalleryType;
+    jar?: CookieJar;
+    userAgent?: string;
+    proxy?: ProxyConfig;
+  }
+
+  export interface ChangePostHeadTextOptions extends GetGalleryHeadTextsOptions {
+    postId: string | number;
+    headTextId: string | number;
+    jar: CookieJar;
+  }
+
+  export interface ChangePostHeadTextResult {
+    success: boolean;
+    message?: string;
+    responseStatus: number;
+    headText: GalleryHeadText;
+    raw?: any;
+  }
+
   /** 자동완성 결과 갤러리 항목 */
   export interface AutocompleteGalleryItem {
     name: string;
@@ -302,6 +349,17 @@ declare module "@gurumnyang/dcinside.js" {
    * 실시간 베스트 추천을 수행합니다.
    */
   export function recommendBest(options: BestRecommendOptions): Promise<BestRecommendResult>;
+
+  /**
+   * 해당 갤러리 관리자 세션으로 특정 게시글을 끌어올립니다.
+   */
+  export function bumpPost(options: ManagerBumpOptions): Promise<ManagerBumpResult>;
+
+  /** 갤러리에서 선택 가능한 말머리 ID와 이름을 반환합니다. */
+  export function getGalleryHeadTexts(options: GetGalleryHeadTextsOptions): Promise<GalleryHeadText[]>;
+
+  /** 관리자 세션으로 특정 게시글의 말머리를 변경합니다. */
+  export function changePostHeadText(options: ChangePostHeadTextOptions): Promise<ChangePostHeadTextResult>;
   
   /**
    * @deprecated getPostList를 사용하세요. PostInfo[]를 반환합니다.
@@ -419,5 +477,17 @@ declare module "@gurumnyang/dcinside.js" {
     recommendBestPost: (
       options: BestRecommendOptions
     ) => Promise<BestRecommendResult>;
+
+    bumpManagerPost: (
+      options: ManagerBumpOptions
+    ) => Promise<ManagerBumpResult>;
+
+    getGalleryHeadTexts: (
+      options: GetGalleryHeadTextsOptions
+    ) => Promise<GalleryHeadText[]>;
+
+    changePostHeadText: (
+      options: ChangePostHeadTextOptions
+    ) => Promise<ChangePostHeadTextResult>;
   };
 }

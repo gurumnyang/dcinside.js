@@ -303,3 +303,51 @@ export interface BestRecommendResult {
   responseStatus: number;
   raw?: any;
 }
+
+export type ManagerGalleryType = 'minor' | 'mini' | 'person';
+
+export interface ManagerBumpOptions {
+  galleryId: string;
+  postId: string | number;
+  /** mobileLogin()으로 인증된 해당 갤러리 관리자 세션 */
+  jar: CookieJar;
+  /** 기본값은 마이너 갤러리(minor) */
+  galleryType?: ManagerGalleryType;
+  userAgent?: string;
+  proxy?: ProxyConfig;
+}
+
+export interface ManagerBumpResult {
+  success: boolean;
+  message?: string;
+  responseStatus: number;
+  raw?: any;
+}
+
+export interface GalleryHeadText {
+  id: string;
+  name: string;
+}
+
+export interface GetGalleryHeadTextsOptions {
+  galleryId: string;
+  galleryType?: ManagerGalleryType;
+  jar?: CookieJar;
+  userAgent?: string;
+  proxy?: ProxyConfig;
+}
+
+export interface ChangePostHeadTextOptions extends GetGalleryHeadTextsOptions {
+  postId: string | number;
+  headTextId: string | number;
+  /** mobileLogin()으로 인증된 해당 갤러리 관리자 세션 */
+  jar: CookieJar;
+}
+
+export interface ChangePostHeadTextResult {
+  success: boolean;
+  message?: string;
+  responseStatus: number;
+  headText: GalleryHeadText;
+  raw?: any;
+}

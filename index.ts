@@ -23,6 +23,12 @@ import type {
   MobileDeleteCommentResult,
   BestRecommendOptions,
   BestRecommendResult,
+  ManagerBumpOptions,
+  ManagerBumpResult,
+  GetGalleryHeadTextsOptions,
+  GalleryHeadText,
+  ChangePostHeadTextOptions,
+  ChangePostHeadTextResult,
   SearchOptions,
 } from './src/types';
 
@@ -91,6 +97,18 @@ async function recommendBest(options: BestRecommendOptions): Promise<BestRecomme
   return scraper.recommendBestPost({ galleryId, postId, ...rest });
 }
 
+async function bumpPost(options: ManagerBumpOptions): Promise<ManagerBumpResult> {
+  return scraper.bumpManagerPost(options);
+}
+
+async function getGalleryHeadTexts(options: GetGalleryHeadTextsOptions): Promise<GalleryHeadText[]> {
+  return scraper.getGalleryHeadTexts(options);
+}
+
+async function changePostHeadText(options: ChangePostHeadTextOptions): Promise<ChangePostHeadTextResult> {
+  return scraper.changePostHeadText(options);
+}
+
 export = {
   getPostList,
   getPost,
@@ -105,6 +123,9 @@ export = {
   deletePost,
   deleteComment,
   recommendBest,
+  bumpPost,
+  getGalleryHeadTexts,
+  changePostHeadText,
   getPostNumbers: getPostList,
   delay,
   getRandomUserAgent,

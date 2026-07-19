@@ -6,6 +6,8 @@ const { getMobilePostContent, parseMobilePostHtml } = require('./mobilePost');
 const { createMobilePost, deleteMobilePost } = require('../../post/mobileWrite');
 const { createMobileComment, deleteMobileComment } = require('../../comment/mobileComment');
 const { recommendBestPost } = require('../../post/bestRecommend');
+const { bumpManagerPost } = require('../../post/managerBump');
+const { getGalleryHeadTexts, changePostHeadText } = require('../../post/managerHeadText');
 
 module.exports = {
   // legacy PC
@@ -22,4 +24,7 @@ module.exports = {
   createMobileComment,
   deleteMobileComment,
   recommendBestPost,
+  bumpManagerPost,
+  getGalleryHeadTexts,
+  changePostHeadText,
 };

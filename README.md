@@ -176,6 +176,51 @@ const dc = require('@gurumnyang/dcinside.js');
 })();
 ```
 
+### 관리자 게시글 끌올
+
+`mobileLogin()`으로 로그인한 해당 갤러리 관리자 세션을 사용해 특정 게시글을 끌어올립니다. 관리자 권한이 없는 계정에는 끌올 UI가 노출되지 않으며, `bumpPost()`도 요청을 보내기 전에 이를 확인하고 중단합니다.
+
+```javascript
+const dc = require('@gurumnyang/dcinside.js');
+
+(async () => {
+  const login = await dc.mobileLogin({
+    code: process.env.DC_ID,
+    password: process.env.DC_PW,
+    returnUrl: 'https://gall.dcinside.com/mgallery/board/lists/?id=chatgpt',
+  });
+  if (!login.success) throw new Error(login.reason || '로그인 실패');
+
+  const result = await dc.bumpPost({
+    galleryId: 'chatgpt',
+    postId: 12345,
+    jar: login.jar,
+  });
+
+  console.log(result);
+})();
+```
+
+기본 `galleryType`은 마이너 갤러리인 `minor`입니다. 미니 갤러리는 `mini`, 인물 갤러리는 `person`을 지정할 수 있습니다. 고정글이나 공지는 DCInside 정책상 끌올할 수 없습니다.
+
+### 갤러리 말머리 조회 및 관리자 변경
+
+```javascript
+const headTexts = await dc.getGalleryHeadTexts({ galleryId: 'chatgpt' });
+// [{ id: '0', name: '잡담' }, { id: '120', name: '❓질문' }, ...]
+
+const changed = await dc.changePostHeadText({
+  galleryId: 'chatgpt',
+  postId: 115586,
+  headTextId: 10,
+  jar: login.jar,
+});
+```
+
+`getGalleryHeadTexts()`는 공개 목록에서 조회하므로 로그인 없이 사용할 수 있습니다. `changePostHeadText()`는 관리자 전용 단일 필드 변경 API를 사용하므로 해당 갤러리 관리자 세션이 필요하며, 자기 글과 타인 글 모두 같은 방식으로 처리합니다. 일반 작성자가 자기 글을 바꾸는 PC 게시물 수정은 제목·본문·첨부를 함께 재제출하는 별도 흐름이므로 이 함수에 포함하지 않습니다.
+
+관리자 검색 필터에만 나타나는 특수 ID `999`(`매니저`)는 타인 글 말머리 변경 API가 지원하지 않으므로 조회 결과에서 제외됩니다.
+
 
 ## 터미널 브라우저(TUI)
 
@@ -496,6 +541,34 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
   - `message` (문자열, 선택): 서버가 전달한 메시지(예: 이미 추천함 등)
   - `responseStatus` (숫자): HTTP 상태 코드
   - `raw` (임의, 선택): 서버 원본 응답 객체
+
+---
+
+#### `bumpPost(options)`
+
+관리자 PC 화면과 같은 계약으로 특정 게시글을 끌어올립니다. `mobileLogin()`에서 받은 해당 갤러리 관리자 `jar`가 필수입니다.
+
+**매개변수:**
+- `options` (ManagerBumpOptions)
+  - `galleryId` (문자열): 갤러리 ID (필수)
+  - `postId` (문자열 | 숫자): 끌어올릴 게시글 번호 (필수)
+  - `jar` (CookieJar): 관리자 로그인 세션 (필수)
+  - `galleryType` (`minor` | `mini` | `person`, 선택): 기본값 `minor`
+  - `userAgent` (문자열, 선택): 커스텀 User-Agent
+  - `proxy` (ProxyConfig, 선택): Axios 프록시 설정 객체 또는 `false`
+
+**반환값:**
+- `Promise<ManagerBumpResult>`: 성공 여부, 서버 메시지, HTTP 상태와 원본 응답
+
+---
+
+#### `getGalleryHeadTexts(options)`
+
+갤러리에서 선택 가능한 말머리를 `{ id, name }` 배열로 반환합니다. `jar`는 선택 사항입니다.
+
+#### `changePostHeadText(options)`
+
+관리자 세션으로 특정 게시글의 말머리만 변경합니다. `galleryId`, `postId`, `headTextId`, 관리자 `jar`가 필요합니다. 관리자 권한과 말머리 ID 유효성을 확인한 후 요청합니다.
 
 ---
 
