@@ -47,6 +47,7 @@ const writeHtml = `
         <input name="subject" value="" />
         <textarea name="memo"></textarea>
         <input name="headtext" value="0" />
+        <input type="checkbox" name="add_watermark" />
       </form>
     </body>
   </html>
@@ -128,6 +129,67 @@ test('createMobilePost preserves the text-only empty files field', async () => {
 
   expect(formInstances[0].parts.filter(part => part.name === 'files')).toHaveLength(1);
   expect(formInstances[0].parts.some(part => part.name === 'upload[]')).toBe(false);
+});
+
+test('createMobilePost omits signmark by default even when the form contains add_watermark', async () => {
+  mobileCommon.createMobileClient.mockReturnValue({
+    post: jest.fn((url) => {
+      if (url.endsWith('/ajax/i_filter')) return Promise.resolve({ data: { result: true }, status: 200 });
+      if (url.endsWith('/upload_img.php')) {
+        return Promise.resolve({ data: { result: true, thumb: ['thumb-1'] }, status: 200 });
+      }
+      return Promise.resolve({ data: 'ok', status: 200 });
+    }),
+  });
+
+  await createMobilePost({
+    galleryId: 'chatgpt',
+    subject: 'unsigned image',
+    content: 'body',
+    jar: new CookieJar(),
+    images: [{ data: Buffer.from('image'), filename: 'image.png', contentType: 'image/png' }],
+  });
+
+  const finalForm = formInstances[1];
+  expect(finalForm.parts.some(part => part.name === 'add_watermark')).toBe(false);
+});
+
+test('createMobilePost sends add_watermark only when signmark is true', async () => {
+  mobileCommon.createMobileClient.mockReturnValue({
+    post: jest.fn((url) => {
+      if (url.endsWith('/ajax/i_filter')) return Promise.resolve({ data: { result: true }, status: 200 });
+      if (url.endsWith('/upload_img.php')) {
+        return Promise.resolve({ data: { result: true, thumb: ['thumb-1'] }, status: 200 });
+      }
+      return Promise.resolve({ data: 'ok', status: 200 });
+    }),
+  });
+
+  await createMobilePost({
+    galleryId: 'chatgpt',
+    subject: 'signed image',
+    content: 'body',
+    jar: new CookieJar(),
+    images: [{ data: Buffer.from('image'), filename: 'image.png', contentType: 'image/png' }],
+    signmark: true,
+  });
+
+  const finalForm = formInstances[1];
+  expect(finalForm.parts.filter(part => part.name === 'add_watermark')).toEqual([
+    { name: 'add_watermark', value: '1', options: undefined },
+  ]);
+});
+
+test('createMobilePost rejects non-boolean signmark values', async () => {
+  await expect(createMobilePost({
+    galleryId: 'chatgpt',
+    subject: 'invalid signmark',
+    content: 'body',
+    jar: new CookieJar(),
+    signmark: 'false',
+  })).rejects.toThrow('signmark는 boolean이어야 합니다.');
+
+  expect(mobileCommon.createMobileClient).not.toHaveBeenCalled();
 });
 
 test('createMobilePost resolves the post ID from the latest board list after meta refresh', async () => {

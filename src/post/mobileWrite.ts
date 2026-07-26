@@ -165,12 +165,14 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
     proxy,
     extraFields,
     images,
+    signmark = false,
   } = options;
 
   if (!galleryId) throw new Error('galleryId는 필수입니다.');
   if (!subject) throw new Error('subject는 필수입니다.');
   if (!content) throw new Error('content는 필수입니다.');
   if (images !== undefined && !Array.isArray(images)) throw new Error('images는 배열이어야 합니다.');
+  if (typeof signmark !== 'boolean') throw new Error('signmark는 boolean이어야 합니다.');
   for (const [index, image] of (images || []).entries()) {
     if (!image || !Buffer.isBuffer(image.data) || image.data.length === 0) {
       throw new Error(`images[${index}].data는 비어 있지 않은 Buffer여야 합니다.`);
@@ -257,6 +259,12 @@ export async function createMobilePost(options: MobileCreatePostOptions): Promis
       fields[key] = value;
     }
   }
+
+  // 브라우저는 체크되지 않은 add_watermark를 전송하지 않습니다.
+  // 글쓰기 폼에서 자동 수집된 기본값이나 extraFields 값은 제거하고
+  // 명시적으로 signmark=true인 경우에만 활성화합니다.
+  delete fields.add_watermark;
+  if (signmark) fields.add_watermark = '1';
 
   const resolvedNickname = nickname || fields.gall_nickname || fields.user_id || '';
   if (resolvedNickname && !usingLogin) {

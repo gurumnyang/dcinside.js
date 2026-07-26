@@ -57,7 +57,7 @@ const dc = require('@gurumnyang/dcinside.js');
 레거시(PC) 목록 파서는 다음과 같이 호출할 수 있습니다.
 
 ```javascript
-const listPc = await dcCrawler.getPostListLegacy({ page: 1, galleryId: 'programming', boardType: 'all' });
+const listPc = await dc.getPostListLegacy({ page: 1, galleryId: 'programming', boardType: 'all' });
 ```
 
 #### 타입 상세
@@ -103,7 +103,7 @@ const dc = require('@gurumnyang/dcinside.js');
     throw new Error(`로그인 실패: ${login.reason}`);
   }
 
-  const write = await dc.createMobilePost({
+  const write = await dc.createPost({
     galleryId: 'dragonlake',
     subject: '테스트 제목',
     content: '테스트 본문입니다.',
@@ -124,7 +124,7 @@ const dc = require('@gurumnyang/dcinside.js');
 
   console.log('등록된 게시글 번호:', write.postId, '이동 URL:', write.redirectUrl);
 
-  const remove = await dc.deleteMobilePost({
+  const remove = await dc.deletePost({
     galleryId: 'dragonlake',
     postId: write.postId,
     jar: login.jar,
@@ -145,11 +145,11 @@ const dc = require('@gurumnyang/dcinside.js');
 const dc = require('@gurumnyang/dcinside.js');
 
 (async () => {
-  // (선택) 로그인 세션이 있다면 jar을 전달할 수 있습니다.
+  // (optional) 로그인 세션이 있다면 jar을 전달할 수 있습니다.
   // const login = await dc.mobileLogin({ code: process.env.DC_ID, password: process.env.DC_PW });
   // const jar = login.success ? login.jar : undefined;
 
-  // (선택) 프록시 사용 예시 (Axios ProxyConfig 형식)
+  // (optional) 프록시 사용 예시 (Axios ProxyConfig 형식)
   const proxy = process.env.HTTP_PROXY
     ? (() => {
         const u = new URL(process.env.HTTP_PROXY);
@@ -256,7 +256,7 @@ console.log(getRandomUserAgent()); // 무작위 User-Agent 문자열 반환
   dislikeCount: "2",
   comments: {
     totalCount: 5,
-    comments: [
+    items: [
       {
         parent: "0", 
         id: "comment_id",
@@ -335,16 +335,7 @@ console.log(getRandomUserAgent()); // 무작위 User-Agent 문자열 반환
 - 최대 재시도 횟수: 3회
 - 재시도 간 지연 시간: 1000ms (지수 백오프 적용)
 
-```javascript
-// 설정 옵션
-const options = {
-  retryAttempts: 5,    // 최대 재시도 횟수 변경 
-  retryDelay: 2000     // 재시도 간 지연 시간 변경
-  // 다른 옵션...
-};
-```
-
-개별 호출 단위로 재시도 횟수를 바꾸고 싶다면 다음처럼 `retryCount`를 지정하세요.
+개별 호출 단위로 재시도 횟수를 바꾸려면 다음처럼 `retryCount`를 지정하세요. 공개 API에서는 재시도 간 지연 시간을 별도로 변경할 수 없습니다.
 
 ```javascript
 await dc.getPost({ galleryId: 'chatgpt', postNo: 12345, retryCount: 5 });
@@ -363,8 +354,8 @@ await dc.getPosts({ galleryId: 'chatgpt', postNumbers: [111, 222], retryCount: 5
 - `options` (GetPostListOptions)
   - `page` (number): 페이지 번호
   - `galleryId` (string): 갤러리 ID
-  - `boardType` (boardType, 선택): 게시판 유형 ('all', 'recommend', 'notice' 중 하나, 기본값: 'all')
-  - `delayMs` (number, 선택): 요청 간 지연 시간(ms)
+  - `boardType` (`'all' | 'recommend' | 'notice'`, optional): 게시판 유형 (기본값: `'all'`)
+  - `delayMs` (number, optional): 요청 간 지연 시간(ms)
 
 **반환값:**
 - `Promise<PostInfo[]>`: 게시글 정보 객체의 배열
@@ -385,9 +376,9 @@ PC(레거시) 파서로 갤러리 페이지에서 게시글 목록을 수집합�
 - `options` (GetPostOptions)
   - `galleryId` (string): 갤러리 ID
   - `postNo` (string | number): 게시글 번호
-  - `extractImages` (boolean, 선택): 이미지 URL 추출 여부 (기본값: false)
-  - `includeImageSource` (boolean, 선택): 본문에 이미지 URL 포함 여부 (기본값: false)
-  - `retryCount` (number, 선택): 이 호출에서 사용할 재시도 횟수 (전역 기본값을 덮어씀)
+  - `extractImages` (boolean, optional): 이미지 URL 추출 여부 (기본값: `true`)
+  - `includeImageSource` (boolean, optional): 본문에 이미지 URL 포함 여부 (기본값: `false`)
+  - `retryCount` (number, optional): 이 호출에서 사용할 재시도 횟수 (전역 기본값을 덮어씀)
 
 **반환값:**
 - `Promise<Post | null>`: 게시글 객체 또는 실패 시 null
@@ -405,14 +396,14 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 여러 게시글 번호로 게시글 내용을 가져옵니다.
 
 **매개변수:**
-- `options` (객체)
-  - `galleryId` (문자열): 갤러리 ID
-  - `postNumbers` (문자열 또는 숫자의 배열): 게시글 번호 배열
-  - `delayMs` (숫자, 선택): 요청 간 지연 시간(ms) (기본값: 100)
-  - `extractImages` (불리언, 선택): 이미지 URL 추출 여부 (기본값: false)
-  - `includeImageSource` (불리언, 선택): 본문에 이미지 URL 포함 여부 (기본값: false)
-  - `onProgress` (함수, 선택): 진행 상황 콜백 함수 (current, total)
-  - `retryCount` (숫자, 선택): 각 게시글 요청에서 사용할 재시도 횟수 (전역 기본값을 덮어씀)
+- `options` (object)
+  - `galleryId` (string): 갤러리 ID
+  - `postNumbers` (Array<string | number>): 게시글 번호 배열
+  - `delayMs` (number, optional): 요청 간 지연 시간(ms) (기본값: 100)
+  - `extractImages` (boolean, optional): 이미지 URL 추출 여부 (기본값: `true`)
+  - `includeImageSource` (boolean, optional): 본문에 이미지 URL 포함 여부 (기본값: `false`)
+  - `onProgress` ((current: number, total: number) => void, optional): 진행 상황 콜백 함수 (current, total)
+  - `retryCount` (number, optional): 각 게시글 요청에서 사용할 재시도 횟수 (전역 기본값을 덮어씀)
 
 **반환값:**
 - `Promise<Post[]>`: 수집된 게시글 객체 배열
@@ -424,7 +415,7 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 검색어를 입력하면 DCInside 자동완성 결과(JSON)를 반환한다.
 
 **매개변수:**
-- `query` (문자열): 검색어
+- `query` (string): 검색어
 
 **반환값:**
 - `Promise<object>`: 자동완성 결과 객체
@@ -436,12 +427,12 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 통합검색을 수행하고 결과를 반환한다.
 
 **매개변수:**
-- `query` (문자열): 검색어
-- `options` (객체, 선택)
-  - `sort` ('latest' | 'accuracy', 선택): 정렬 기준
+- `query` (string): 검색어
+- `options` (object, optional)
+  - `sort` ('latest' | 'accuracy', optional): 정렬 기준
 
 **반환값:**
-- `Promise<object>`: 검색 결과 객체 `{ query?, gallery?, posts[] }`
+- `Promise<SearchResult>`: 검색 결과 객체 `{ query?, galleries, posts }`
 
 ---
 
@@ -451,72 +442,73 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 
 **매개변수:**
 - `options` (MobileLoginOptions)
-  - `code` (문자열): 디시인사이드 식별 코드(ID)
-  - `password` (문자열): 비밀번호
-  - `keepLoggedIn` (불리언, 선택): 자동 로그인 여부 (기본값: `true`)
-  - `userAgent` (문자열, 선택): 커스텀 User-Agent
-  - `jar` (CookieJar, 선택): 외부에서 생성한 쿠키 저장소를 재사용할 때 전달
+  - `code` (string): 디시인사이드 식별 코드(ID)
+  - `password` (string): 비밀번호
+  - `keepLoggedIn` (boolean, optional): 자동 로그인 여부 (기본값: `true`)
+  - `userAgent` (string, optional): 커스텀 User-Agent
+  - `jar` (CookieJar, optional): 외부에서 생성한 쿠키 저장소를 재사용할 때 전달
 
 **반환값:**
 - `Promise<MobileLoginResult>`: 성공 여부, 쿠키 목록, `CookieJar`, 리다이렉트 정보 등을 포함한 객체
 
 ---
 
-#### `createMobilePost(options)`
+#### `createPost(options)`
 
 모바일 글쓰기 폼을 사용해 게시글을 등록합니다.
 
 **매개변수:**
 - `options` (MobileCreatePostOptions)
-  - `galleryId` (문자열): 갤러리 ID (필수)
-  - `subject` (문자열): 말머리/제목 (필수)
-  - `content` (문자열): 본문 (필수)
-  - `headText` (문자열 | 숫자, 선택): 말머리 코드
-  - `nickname` (문자열, 선택): 비로그인 글쓰기용 닉네임
-  - `password` (문자열, 선택): 비로그인 글쓰기용 비밀번호
-  - `useGallNickname` (불리언, 선택): 갤러리 닉네임 사용 여부
-  - `jar` (CookieJar, 선택): 로그인으로 확보한 쿠키를 전달할 때 사용
-  - `userAgent` (문자열, 선택): 커스텀 User-Agent
-  - `extraFields` (객체, 선택): 추가 폼 필드 강제 입력
-  - `images` (MobilePostImage[], 선택): 모바일 이미지 업로드 엔드포인트에 순서대로 전송해 본문 끝에 삽입할 이미지
+  - `galleryId` (string): 갤러리 ID (required)
+  - `subject` (string): 말머리/제목 (required)
+  - `content` (string): 본문 (required)
+  - `headText` (string | number, optional): 말머리 코드
+  - `nickname` (string, optional): 비로그인 글쓰기용 닉네임
+  - `password` (string, optional): 비로그인 글쓰기용 비밀번호
+  - `useGallNickname` (boolean, optional): 갤러리 닉네임 사용 여부
+  - `jar` (CookieJar, optional): 로그인으로 확보한 쿠키를 전달할 때 사용
+  - `userAgent` (string, optional): 커스텀 User-Agent
+  - `extraFields` (object, optional): 추가 폼 필드 강제 입력
+  - `images` (MobilePostImage[], optional): 모바일 이미지 업로드 엔드포인트에 순서대로 전송해 본문 끝에 삽입할 이미지
     - `data` (Buffer): 이미지 원본 바이트
-    - `filename` (문자열): DCInside에 전달할 파일명
-    - `contentType` (문자열): `image/jpeg`, `image/png` 같은 MIME 타입
+    - `filename` (string): DCInside에 전달할 파일명
+    - `contentType` (string): `image/jpeg`, `image/png` 같은 MIME 타입
+  - `signmark` (boolean, optional): `true`일 때만 첨부 이미지에 디시 로고와 작성자 닉네임을 표기 (기본값: `false`)
 
 **반환값:**
 - `Promise<MobileCreatePostResult>`: 성공 여부, 게시글 번호, 리다이렉트 URL, 업로드된 `imageUrls`, 서버 메시지 등을 담은 객체
 
 ---
 
-#### `deleteMobilePost(options)`
+#### `deletePost(options)`
 
 모바일 게시글 삭제 엔드포인트를 호출합니다.
 
 **매개변수:**
 - `options` (MobileDeletePostOptions)
-  - `galleryId` (문자열): 갤러리 ID (필수)
-  - `postId` (문자열 | 숫자): 삭제할 게시글 번호 (필수)
-  - `jar` (CookieJar, 선택): 로그인 쿠키가 담긴 저장소
-  - `password` (문자열, 선택): 비로그인 삭제 시 사용하는 비밀번호
-  - `userAgent` (문자열, 선택): 커스텀 User-Agent
+  - `galleryId` (string): 갤러리 ID (required)
+  - `postId` (string | number): 삭제할 게시글 번호 (required)
+  - `jar` (CookieJar, optional): 로그인 쿠키가 담긴 저장소
+  - `password` (string, optional): 비로그인 삭제 시 사용하는 비밀번호
+  - `userAgent` (string, optional): 커스텀 User-Agent
 
 **반환값:**
 - `Promise<MobileDeletePostResult>`: 성공 여부와 서버 메시지를 담은 객체
 
 ---
 
-#### `deleteMobileComment(options)`
+#### `deleteComment(options)`
 
 모바일 댓글 삭제 엔드포인트를 호출합니다.
 
 **매개변수:**
 - `options` (MobileDeleteCommentOptions)
-  - `galleryId` (문자열): 갤러리 ID (필수)
-  - `postId` (문자열 | 숫자): 댓글이 달린 게시글 번호 (필수)
-  - `commentId` (문자열 | 숫자): 삭제할 댓글 번호 (필수)
-  - `jar` (CookieJar, 선택): 로그인 쿠키가 담긴 저장소
-  - `password` (문자열, 선택): 비로그인 댓글 삭제 시 사용하는 비밀번호
-  - `userAgent` (문자열, 선택): 커스텀 User-Agent
+  - `galleryId` (string): 갤러리 ID (required)
+  - `postId` (string | number): 댓글이 달린 게시글 번호 (required)
+  - `commentId` (string | number): 삭제할 댓글 번호 (required)
+  - `jar` (CookieJar, optional): 로그인 쿠키가 담긴 저장소
+  - `password` (string, optional): 비로그인 댓글 삭제 시 사용하는 비밀번호
+  - `userAgent` (string, optional): 커스텀 User-Agent
 
 **반환값:**
 - `Promise<MobileDeleteCommentResult>`: 성공 여부와 서버 메시지를 담은 객체
@@ -529,18 +521,18 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 
 **매개변수:**
 - `options` (BestRecommendOptions)
-  - `galleryId` (문자열): 갤러리 ID (필수)
-  - `postId` (문자열 | 숫자): 추천할 게시글 번호 (필수)
-  - `jar` (CookieJar, 선택): 로그인(세션) 쿠키 저장소
-  - `userAgent` (문자열, 선택): 커스텀 User-Agent
-  - `proxy` (ProxyConfig, 선택): Axios 프록시 설정 객체 또는 `false`
+  - `galleryId` (string): 갤러리 ID (required)
+  - `postId` (string | number): 추천할 게시글 번호 (required)
+  - `jar` (CookieJar, optional): 로그인(세션) 쿠키 저장소
+  - `userAgent` (string, optional): 커스텀 User-Agent
+  - `proxy` (ProxyConfig, optional): Axios 프록시 설정 객체 또는 `false`
 
 **반환값:**
 - `Promise<BestRecommendResult>`
-  - `success` (불리언): 성공 여부
-  - `message` (문자열, 선택): 서버가 전달한 메시지(예: 이미 추천함 등)
-  - `responseStatus` (숫자): HTTP 상태 코드
-  - `raw` (임의, 선택): 서버 원본 응답 객체
+  - `success` (boolean): 성공 여부
+  - `message` (string, optional): 서버가 전달한 메시지(예: 이미 추천함 등)
+  - `responseStatus` (number): HTTP 상태 코드
+  - `raw` (any, optional): 서버 원본 응답 객체
 
 ---
 
@@ -550,12 +542,12 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 
 **매개변수:**
 - `options` (ManagerBumpOptions)
-  - `galleryId` (문자열): 갤러리 ID (필수)
-  - `postId` (문자열 | 숫자): 끌어올릴 게시글 번호 (필수)
-  - `jar` (CookieJar): 관리자 로그인 세션 (필수)
-  - `galleryType` (`minor` | `mini` | `person`, 선택): 기본값 `minor`
-  - `userAgent` (문자열, 선택): 커스텀 User-Agent
-  - `proxy` (ProxyConfig, 선택): Axios 프록시 설정 객체 또는 `false`
+  - `galleryId` (string): 갤러리 ID (required)
+  - `postId` (string | number): 끌어올릴 게시글 번호 (required)
+  - `jar` (CookieJar): 관리자 로그인 세션 (required)
+  - `galleryType` (`minor` | `mini` | `person`, optional): 기본값 `minor`
+  - `userAgent` (string, optional): 커스텀 User-Agent
+  - `proxy` (ProxyConfig, optional): Axios 프록시 설정 객체 또는 `false`
 
 **반환값:**
 - `Promise<ManagerBumpResult>`: 성공 여부, 서버 메시지, HTTP 상태와 원본 응답
@@ -564,7 +556,7 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 
 #### `getGalleryHeadTexts(options)`
 
-갤러리에서 선택 가능한 말머리를 `{ id, name }` 배열로 반환합니다. `jar`는 선택 사항입니다.
+갤러리에서 사용할 수 있는 말머리를 `{ id, name }` 배열로 반환합니다. `jar`는 optional입니다.
 
 #### `changePostHeadText(options)`
 
@@ -579,7 +571,7 @@ PC(레거시) 파서로 게시글 내용을 가져옵니다. 인터페이스는 
 지정된 시간(밀리초) 동안 실행을 지연시킵니다.
 
 **매개변수:**
-- `ms` (숫자): 지연할 시간(밀리초)
+- `ms` (number): 지연할 시간(밀리초)
 
 **반환값:**
 - `Promise<void>`

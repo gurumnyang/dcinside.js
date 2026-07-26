@@ -218,6 +218,8 @@ export interface MobileCreatePostOptions {
   extraFields?: Record<string, string | undefined>;
   /** Images attached in order through the mobile write form's upload[] field. */
   images?: MobilePostImage[];
+  /** Add the DCInside logo and author nickname to attached images. Defaults to false. */
+  signmark?: boolean;
 }
 
 export interface MobileCreatePostResult {
