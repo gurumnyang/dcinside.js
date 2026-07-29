@@ -98,9 +98,9 @@ function parseMobilePostHtml(html: string, options: { extractImages?: boolean, i
   $('.all-comment-lst > li').each((_, li) => {
     const $li = $(li);
     const id = String($li.attr('no') || '').trim();
-    const a = $li.find('a.nick').first();
-    const nameRaw = normalizeText(a.text()).replace(/^글쓴\s*/, '');
-    const userId = a.find('.blockCommentId').attr('data-info') || '';
+    const nicknameEl = $li.find('a.nick, button.nick').first();
+    const nameRaw = normalizeText(nicknameEl.text()).replace(/^글쓴\s*/, '');
+    const userId = $li.find('.blockCommentId').first().attr('data-info') || '';
     const ip = ($li.find('.ip').first().text() || '').replace(/[()]/g, '').trim();
     const regDate = normalizeText($li.find('span.date').first().text());
     const memoEl = $li.find('p.txt').first();
